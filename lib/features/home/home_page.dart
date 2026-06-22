@@ -17,8 +17,11 @@ class _HomePageState extends State<HomePage> {
 
   List<dynamic> libs = [];
   String? selectedLibraryId;
+  String? heroLibraryId;
   bool loading = true;
   int selectedIndex = 0;
+  int heroIndex = 0;
+  final Map<String, Future<List<dynamic>>> cache = {};
 
   late Future<List<dynamic>> librariesFuture;
 
@@ -38,6 +41,7 @@ class _HomePageState extends State<HomePage> {
         selectedLibraryId = data.first['Id'];
       }
       selectedIndex = 0;
+      heroIndex = 0;
 
       setState(() {});
     });
@@ -71,9 +75,12 @@ class _HomePageState extends State<HomePage> {
                 selectedIndex: selectedIndex,
                 onDestinationSelected: (index) {
                   setState(() {
+                    heroIndex = 0;
                     selectedIndex = index;
-                    if (index > 0 && libs.isNotEmpty) {
-                      selectedLibraryId = libs[index - 1]['Id'];
+                    if (index == 0) {
+                      heroLibraryId = libs.isNotEmpty ? libs.first['Id'] : null;
+                    } else {
+                      heroLibraryId = libs[index - 1]['Id'];
                     }
                   });
                 },
@@ -85,7 +92,11 @@ class _HomePageState extends State<HomePage> {
                   ),
                   for (final lib in libs)
                     NavigationRailDestination(
-                      icon: const Icon(Icons.folder),
+                      icon: Icon(
+                        lib['CollectionType'] == 'music'
+                            ? Icons.music_note
+                            : Icons.movie,
+                      ),
                       label: Text(lib['Name'] ?? 'Unknown'),
                     ),
                 ],
@@ -99,10 +110,172 @@ class _HomePageState extends State<HomePage> {
                     : selectedIndex == 0
                     ? CustomScrollView(
                         slivers: [
+                          SliverToBoxAdapter(
+                            child: StatefulBuilder(
+                              builder: (context, setHeroState) {
+                                return FutureBuilder<List<dynamic>>(
+                                  future: cache.putIfAbsent(
+                                    libs.isNotEmpty
+                                        ? (selectedIndex == 0
+                                              ? libs.first['Id']
+                                              : selectedLibraryId ??
+                                                    libs.first['Id'])
+                                        : '',
+                                    () => api.getItems(
+                                      libs.isNotEmpty
+                                          ? (selectedIndex == 0
+                                                ? libs.first['Id']
+                                                : selectedLibraryId ??
+                                                      libs.first['Id'])
+                                          : '',
+                                    ),
+                                  ),
+                                  builder: (context, snap) {
+                                    final items = snap.data ?? [];
+
+                                    if (snap.connectionState ==
+                                            ConnectionState.waiting ||
+                                        items.isEmpty) {
+                                      return const SizedBox(
+                                        height: 320,
+                                        child: Center(
+                                          child: CircularProgressIndicator(),
+                                        ),
+                                      );
+                                    }
+
+                                    int localIndex = heroIndex.clamp(
+                                      0,
+                                      items.length - 1,
+                                    );
+                                    final item = items[localIndex];
+
+                                    return Stack(
+                                      children: [
+                                        Container(
+                                          height: 320,
+                                          margin: const EdgeInsets.only(
+                                            left: 12,
+                                            right: 12,
+                                            top: 12,
+                                            bottom: 16,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(
+                                              16,
+                                            ),
+                                            image: DecorationImage(
+                                              image: NetworkImage(
+                                                '${widget.server}/Items/${item['Id']}/Images/Backdrop',
+                                              ),
+                                              fit: BoxFit.cover,
+                                            ),
+                                          ),
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(16),
+                                              gradient: const LinearGradient(
+                                                begin: Alignment.bottomCenter,
+                                                end: Alignment.topCenter,
+                                                colors: [
+                                                  Color(0xCC000000),
+                                                  Colors.transparent,
+                                                ],
+                                              ),
+                                            ),
+                                            alignment: Alignment.bottomLeft,
+                                            padding: const EdgeInsets.all(16),
+                                            child: Align(
+                                              alignment: Alignment.bottomLeft,
+                                              child: Padding(
+                                                padding: const EdgeInsets.only(
+                                                  bottom: 8,
+                                                ),
+                                                child: Image.network(
+                                                  '${widget.server}/Items/${item['Id']}/Images/Logo',
+                                                  height: 110,
+                                                  fit: BoxFit.contain,
+                                                  errorBuilder:
+                                                      (
+                                                        context,
+                                                        error,
+                                                        stackTrace,
+                                                      ) {
+                                                        return Text(
+                                                          item['Name'] ?? '',
+                                                          style:
+                                                              const TextStyle(
+                                                                color: Colors
+                                                                    .white,
+                                                                fontSize: 22,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold,
+                                                              ),
+                                                        );
+                                                      },
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        Positioned(
+                                          left: 8,
+                                          top: 0,
+                                          bottom: 0,
+                                          child: IconButton(
+                                            icon: const Icon(
+                                              Icons.chevron_left,
+                                              color: Colors.white,
+                                              size: 32,
+                                            ),
+                                            onPressed: () {
+                                              setHeroState(() {
+                                                if (items.isEmpty) return;
+                                                heroIndex =
+                                                    (heroIndex -
+                                                        1 +
+                                                        items.length) %
+                                                    items.length;
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                        Positioned(
+                                          right: 8,
+                                          top: 0,
+                                          bottom: 0,
+                                          child: IconButton(
+                                            icon: const Icon(
+                                              Icons.chevron_right,
+                                              color: Colors.white,
+                                              size: 32,
+                                            ),
+                                            onPressed: () {
+                                              setHeroState(() {
+                                                if (items.isEmpty) return;
+                                                heroIndex =
+                                                    (heroIndex + 1) %
+                                                    items.length;
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                );
+                              },
+                            ),
+                          ),
                           for (final lib in libs)
                             SliverToBoxAdapter(
                               child: FutureBuilder<List<dynamic>>(
-                                future: api.getItems(lib['Id']),
+                                future: cache.putIfAbsent(
+                                  lib['Id'],
+                                  () => api.getItems(lib['Id']),
+                                ),
                                 builder: (context, snap) {
                                   final items = snap.data ?? [];
 
@@ -128,14 +301,7 @@ class _HomePageState extends State<HomePage> {
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        Text(
-                                          lib['Name'],
-                                          style: Theme.of(
-                                            context,
-                                          ).textTheme.titleMedium,
-                                        ),
-                                        const SizedBox(height: 12),
-
+                                        // Folder title and SizedBox removed for cleaner UI
                                         if (isMusic)
                                           Column(
                                             children: List.generate(
@@ -144,8 +310,25 @@ class _HomePageState extends State<HomePage> {
                                                 final item = items[i];
 
                                                 return ListTile(
-                                                  leading: const Icon(
-                                                    Icons.music_note,
+                                                  leading: ClipRRect(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          6,
+                                                        ),
+                                                    child: Image.network(
+                                                      '${widget.server}/Items/${item['Id']}/Images/Primary',
+                                                      width: 48,
+                                                      height: 48,
+                                                      fit: BoxFit.cover,
+                                                      errorBuilder:
+                                                          (
+                                                            _,
+                                                            __,
+                                                            ___,
+                                                          ) => const Icon(
+                                                            Icons.music_note,
+                                                          ),
+                                                    ),
                                                   ),
                                                   title: Text(
                                                     item['Name'] ?? '',
@@ -200,7 +383,10 @@ class _HomePageState extends State<HomePage> {
                         slivers: [
                           SliverToBoxAdapter(
                             child: FutureBuilder<List<dynamic>>(
-                              future: api.getItems(selectedLibraryId!),
+                              future: cache.putIfAbsent(
+                                selectedLibraryId!,
+                                () => api.getItems(selectedLibraryId!),
+                              ),
                               builder: (context, snap) {
                                 final items = snap.data ?? [];
 
@@ -225,34 +411,37 @@ class _HomePageState extends State<HomePage> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      Text(
-                                        lib['Name'],
-                                        style: Theme.of(
-                                          context,
-                                        ).textTheme.titleMedium,
-                                      ),
-                                      const SizedBox(height: 12),
-
+                                      // Folder title and SizedBox removed for cleaner UI
                                       if (isMusic)
                                         Column(
-                                          children: List.generate(
-                                            items.length,
-                                            (i) {
-                                              final item = items[i];
+                                          children: List.generate(items.length, (
+                                            i,
+                                          ) {
+                                            final item = items[i];
 
-                                              return ListTile(
-                                                leading: const Icon(
-                                                  Icons.music_note,
+                                            return ListTile(
+                                              leading: ClipRRect(
+                                                borderRadius:
+                                                    BorderRadius.circular(6),
+                                                child: Image.network(
+                                                  '${widget.server}/Items/${item['Id']}/Images/Primary',
+                                                  width: 48,
+                                                  height: 48,
+                                                  fit: BoxFit.cover,
+                                                  errorBuilder: (_, __, ___) =>
+                                                      const Icon(
+                                                        Icons.music_note,
+                                                      ),
                                                 ),
-                                                title: Text(item['Name'] ?? ''),
-                                                subtitle: Text(
-                                                  item['Album'] ??
-                                                      item['AlbumArtist'] ??
-                                                      '',
-                                                ),
-                                              );
-                                            },
-                                          ),
+                                              ),
+                                              title: Text(item['Name'] ?? ''),
+                                              subtitle: Text(
+                                                item['Album'] ??
+                                                    item['AlbumArtist'] ??
+                                                    '',
+                                              ),
+                                            );
+                                          }),
                                         )
                                       else
                                         GridView.builder(
