@@ -64,6 +64,19 @@ class _HomePageState extends State<HomePage> {
           }
 
           final libs = snapshot.data ?? [];
+          final activeLibs = selectedIndex == 0
+              ? libs
+              : [libs[selectedIndex - 1]];
+
+          final movieLibs = activeLibs.where((l) {
+            final type = (l['CollectionType'] ?? '').toString().toLowerCase();
+            return type == 'movies' || type == 'tvshows';
+          }).toList();
+
+          final musicLibs = activeLibs.where((l) {
+            final type = (l['CollectionType'] ?? '').toString().toLowerCase();
+            return type == 'music';
+          }).toList();
 
           if (libs.isEmpty) {
             return const Center(child: Text('No libraries found'));
@@ -79,13 +92,16 @@ class _HomePageState extends State<HomePage> {
                     setState(() {
                       heroIndex = 0;
                       selectedIndex = index;
+
                       if (index == 0) {
-                        heroLibraryId = libs.isNotEmpty
+                        selectedLibraryId = libs.isNotEmpty
                             ? libs.first['Id']
                             : null;
                       } else {
-                        heroLibraryId = libs[index - 1]['Id'];
+                        selectedLibraryId = libs[index - 1]['Id'];
                       }
+
+                      heroLibraryId = selectedLibraryId;
                     });
                   },
                   labelType: NavigationRailLabelType.none,
@@ -179,12 +195,7 @@ class _HomePageState extends State<HomePage> {
                                 builder: (context, setHeroState) {
                                   return FutureBuilder<List<dynamic>>(
                                     future: cache.putIfAbsent(
-                                      libs.isNotEmpty
-                                          ? (selectedIndex == 0
-                                                ? libs.first['Id']
-                                                : selectedLibraryId ??
-                                                      libs.first['Id'])
-                                          : '',
+                                      'items_hero_${selectedIndex}_${heroLibraryId ?? 'home'}',
                                       () => api.getItems(
                                         libs.isNotEmpty
                                             ? (selectedIndex == 0
@@ -333,11 +344,13 @@ class _HomePageState extends State<HomePage> {
                                 },
                               ),
                             ),
-                            for (final lib in libs)
+                            // --- Inserted separation: movieLibs and musicLibs ---
+                            for (final lib in movieLibs)
                               SliverToBoxAdapter(
+                                key: ValueKey('movie_section_${lib['Id']}'),
                                 child: FutureBuilder<List<dynamic>>(
                                   future: cache.putIfAbsent(
-                                    lib['Id'],
+                                    'items_movie_${lib['Id']}',
                                     () => api.getItems(lib['Id']),
                                   ),
                                   builder: (context, snap) {
@@ -351,8 +364,61 @@ class _HomePageState extends State<HomePage> {
                                       );
                                     }
 
-                                    final isMusic =
-                                        lib['CollectionType'] == 'music';
+                                    return Padding(
+                                      padding: const EdgeInsets.only(
+                                        left: 12,
+                                        right: 12,
+                                        bottom: 24,
+                                        top: 12,
+                                      ),
+                                      child: GridView.builder(
+                                        shrinkWrap: true,
+                                        physics:
+                                            const NeverScrollableScrollPhysics(),
+                                        gridDelegate:
+                                            const SliverGridDelegateWithFixedCrossAxisCount(
+                                              crossAxisCount: 4,
+                                              mainAxisSpacing: 10,
+                                              crossAxisSpacing: 10,
+                                              childAspectRatio: 0.65,
+                                            ),
+                                        itemCount: items.length,
+                                        itemBuilder: (context, i) {
+                                          final item = items[i];
+                                          final imageUrl =
+                                              '${widget.server}/Items/${item['Id']}/Images/Primary';
+
+                                          return PosterCard(
+                                            title: item['Name'] ?? '',
+                                            imageUrl: imageUrl,
+                                            headers: {
+                                              'X-Emby-Token': widget.token,
+                                            },
+                                          );
+                                        },
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                            for (final lib in musicLibs)
+                              SliverToBoxAdapter(
+                                key: ValueKey('music_section_${lib['Id']}'),
+                                child: FutureBuilder<List<dynamic>>(
+                                  future: cache.putIfAbsent(
+                                    'items_music_${lib['Id']}',
+                                    () => api.getItems(lib['Id']),
+                                  ),
+                                  builder: (context, snap) {
+                                    final items = snap.data ?? [];
+
+                                    if (snap.connectionState ==
+                                        ConnectionState.waiting) {
+                                      return const Padding(
+                                        padding: EdgeInsets.all(24),
+                                        child: CircularProgressIndicator(),
+                                      );
+                                    }
 
                                     return Padding(
                                       padding: const EdgeInsets.only(
@@ -364,134 +430,83 @@ class _HomePageState extends State<HomePage> {
                                       child: Column(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
-                                        children: [
-                                          // Folder title and SizedBox removed for cleaner UI
-                                          if (isMusic)
-                                            Column(
-                                              children: List.generate(items.length, (
-                                                i,
-                                              ) {
-                                                final item = items[i];
-                                                return Container(
-                                                  margin: const EdgeInsets.only(
-                                                    bottom: 12,
+                                        children: List.generate(items.length, (
+                                          i,
+                                        ) {
+                                          final item = items[i];
+
+                                          return Container(
+                                            margin: const EdgeInsets.only(
+                                              bottom: 12,
+                                            ),
+                                            padding: const EdgeInsets.all(10),
+                                            decoration: BoxDecoration(
+                                              color: Colors.black.withOpacity(
+                                                0.05,
+                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                            ),
+                                            child: Row(
+                                              children: [
+                                                ClipRRect(
+                                                  borderRadius:
+                                                      BorderRadius.circular(10),
+                                                  child: Image.network(
+                                                    '${widget.server}/Items/${item['Id']}/Images/Primary',
+                                                    width: 56,
+                                                    height: 56,
+                                                    fit: BoxFit.cover,
+                                                    errorBuilder:
+                                                        (_, __, ___) =>
+                                                            const Icon(
+                                                              Icons.music_note,
+                                                              size: 30,
+                                                            ),
                                                   ),
-                                                  padding: const EdgeInsets.all(
-                                                    10,
-                                                  ),
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.black
-                                                        .withOpacity(0.05),
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          12,
-                                                        ),
-                                                  ),
-                                                  child: Row(
+                                                ),
+                                                const SizedBox(width: 12),
+                                                Expanded(
+                                                  child: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
                                                     children: [
-                                                      ClipRRect(
-                                                        borderRadius:
-                                                            BorderRadius.circular(
-                                                              10,
-                                                            ),
-                                                        child: Image.network(
-                                                          '${widget.server}/Items/${item['Id']}/Images/Primary',
-                                                          width: 56,
-                                                          height: 56,
-                                                          fit: BoxFit.cover,
-                                                          errorBuilder:
-                                                              (
-                                                                _,
-                                                                __,
-                                                                ___,
-                                                              ) => const Icon(
-                                                                Icons
-                                                                    .music_note,
-                                                                size: 30,
-                                                              ),
+                                                      Text(
+                                                        item['Name'] ?? '',
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                        style: const TextStyle(
+                                                          fontWeight:
+                                                              FontWeight.w600,
+                                                          fontSize: 14,
                                                         ),
                                                       ),
-                                                      const SizedBox(width: 12),
-                                                      Expanded(
-                                                        child: Column(
-                                                          crossAxisAlignment:
-                                                              CrossAxisAlignment
-                                                                  .start,
-                                                          children: [
-                                                            Text(
-                                                              item['Name'] ??
-                                                                  '',
-                                                              style: const TextStyle(
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w600,
-                                                                fontSize: 14,
-                                                              ),
-                                                              maxLines: 1,
-                                                              overflow:
-                                                                  TextOverflow
-                                                                      .ellipsis,
-                                                            ),
-                                                            const SizedBox(
-                                                              height: 4,
-                                                            ),
-                                                            Text(
-                                                              item['Album'] ??
-                                                                  item['AlbumArtist'] ??
-                                                                  '',
-                                                              style:
-                                                                  const TextStyle(
-                                                                    fontSize:
-                                                                        12,
-                                                                    color: Colors
-                                                                        .grey,
-                                                                  ),
-                                                              maxLines: 1,
-                                                              overflow:
-                                                                  TextOverflow
-                                                                      .ellipsis,
-                                                            ),
-                                                          ],
+                                                      const SizedBox(height: 4),
+                                                      Text(
+                                                        item['Album'] ??
+                                                            item['AlbumArtist'] ??
+                                                            '',
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                        style: const TextStyle(
+                                                          fontSize: 12,
+                                                          color: Colors.grey,
                                                         ),
-                                                      ),
-                                                      const Icon(
-                                                        Icons.play_arrow,
-                                                        color: Colors.white70,
                                                       ),
                                                     ],
                                                   ),
-                                                );
-                                              }),
-                                            )
-                                          else
-                                            GridView.builder(
-                                              shrinkWrap: true,
-                                              physics:
-                                                  const NeverScrollableScrollPhysics(),
-                                              gridDelegate:
-                                                  const SliverGridDelegateWithFixedCrossAxisCount(
-                                                    crossAxisCount: 4,
-                                                    mainAxisSpacing: 10,
-                                                    crossAxisSpacing: 10,
-                                                    childAspectRatio: 0.65,
-                                                  ),
-                                              itemCount: items.length,
-                                              itemBuilder: (context, i) {
-                                                final item = items[i];
-                                                final imageUrl =
-                                                    '${widget.server}/Items/${item['Id']}/Images/Primary';
-
-                                                return PosterCard(
-                                                  title: item['Name'] ?? '',
-                                                  imageUrl: imageUrl,
-                                                  headers: {
-                                                    'X-Emby-Token':
-                                                        widget.token,
-                                                  },
-                                                );
-                                              },
+                                                ),
+                                                const Icon(
+                                                  Icons.play_arrow,
+                                                  color: Colors.white70,
+                                                ),
+                                              ],
                                             ),
-                                        ],
+                                          );
+                                        }),
                                       ),
                                     );
                                   },
@@ -504,9 +519,10 @@ class _HomePageState extends State<HomePage> {
                       : CustomScrollView(
                           slivers: [
                             SliverToBoxAdapter(
+                              key: ValueKey(selectedLibraryId),
                               child: FutureBuilder<List<dynamic>>(
                                 future: cache.putIfAbsent(
-                                  selectedLibraryId!,
+                                  'lib_${selectedLibraryId!}',
                                   () => api.getItems(selectedLibraryId!),
                                 ),
                                 builder: (context, snap) {
