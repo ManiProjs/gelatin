@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:gelatin/core/storage/auth_storage.dart';
+import 'package:gelatin/features/auth/login_page.dart';
 import 'package:gelatin/features/home/widgets/poster_card.dart';
 import '../../core/api/jellyfin_api.dart';
 
@@ -50,8 +52,6 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Gelatin')),
-
       body: FutureBuilder<List<dynamic>>(
         future: librariesFuture,
         builder: (context, snapshot) {
@@ -100,6 +100,66 @@ class _HomePageState extends State<HomePage> {
                       label: Text(lib['Name'] ?? 'Unknown'),
                     ),
                 ],
+                trailing: Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Divider(),
+                      const SizedBox(height: 8),
+                      IconButton(
+                        icon: const Icon(Icons.settings),
+                        onPressed: () {
+                          showModalBottomSheet(
+                            context: context,
+                            builder: (context) {
+                              return SafeArea(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Text(
+                                        'Settings',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      ListTile(
+                                        leading: const Icon(Icons.logout),
+                                        title: const Text('Sign out'),
+                                        onTap: () async {
+                                          Navigator.of(context).pop();
+
+                                          await AuthStorage.clear();
+
+                                          if (!context.mounted) return;
+
+                                          Navigator.of(
+                                            context,
+                                          ).pushAndRemoveUntil(
+                                            MaterialPageRoute(
+                                              builder: (_) =>
+                                                  const LoginPage(), // or your actual login widget
+                                            ),
+                                            (route) => false,
+                                          );
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      ),
+                      const Text('Settings', style: TextStyle(fontSize: 12)),
+                    ],
+                  ),
+                ),
               ),
 
               const VerticalDivider(width: 1),
@@ -153,7 +213,7 @@ class _HomePageState extends State<HomePage> {
                                     return Stack(
                                       children: [
                                         Container(
-                                          height: 320,
+                                          height: 420,
                                           margin: const EdgeInsets.only(
                                             left: 12,
                                             right: 12,
@@ -304,43 +364,96 @@ class _HomePageState extends State<HomePage> {
                                         // Folder title and SizedBox removed for cleaner UI
                                         if (isMusic)
                                           Column(
-                                            children: List.generate(
-                                              items.length,
-                                              (i) {
-                                                final item = items[i];
-
-                                                return ListTile(
-                                                  leading: ClipRRect(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          6,
-                                                        ),
-                                                    child: Image.network(
-                                                      '${widget.server}/Items/${item['Id']}/Images/Primary',
-                                                      width: 48,
-                                                      height: 48,
-                                                      fit: BoxFit.cover,
-                                                      errorBuilder:
-                                                          (
-                                                            _,
-                                                            __,
-                                                            ___,
-                                                          ) => const Icon(
-                                                            Icons.music_note,
+                                            children: List.generate(items.length, (
+                                              i,
+                                            ) {
+                                              final item = items[i];
+                                              return Container(
+                                                margin: const EdgeInsets.only(
+                                                  bottom: 12,
+                                                ),
+                                                padding: const EdgeInsets.all(
+                                                  10,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.black
+                                                      .withOpacity(0.05),
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
+                                                ),
+                                                child: Row(
+                                                  children: [
+                                                    ClipRRect(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            10,
                                                           ),
+                                                      child: Image.network(
+                                                        '${widget.server}/Items/${item['Id']}/Images/Primary',
+                                                        width: 56,
+                                                        height: 56,
+                                                        fit: BoxFit.cover,
+                                                        errorBuilder:
+                                                            (
+                                                              _,
+                                                              __,
+                                                              ___,
+                                                            ) => const Icon(
+                                                              Icons.music_note,
+                                                              size: 30,
+                                                            ),
+                                                      ),
                                                     ),
-                                                  ),
-                                                  title: Text(
-                                                    item['Name'] ?? '',
-                                                  ),
-                                                  subtitle: Text(
-                                                    item['Album'] ??
-                                                        item['AlbumArtist'] ??
-                                                        '',
-                                                  ),
-                                                );
-                                              },
-                                            ),
+                                                    const SizedBox(width: 12),
+                                                    Expanded(
+                                                      child: Column(
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .start,
+                                                        children: [
+                                                          Text(
+                                                            item['Name'] ?? '',
+                                                            style:
+                                                                const TextStyle(
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w600,
+                                                                  fontSize: 14,
+                                                                ),
+                                                            maxLines: 1,
+                                                            overflow:
+                                                                TextOverflow
+                                                                    .ellipsis,
+                                                          ),
+                                                          const SizedBox(
+                                                            height: 4,
+                                                          ),
+                                                          Text(
+                                                            item['Album'] ??
+                                                                item['AlbumArtist'] ??
+                                                                '',
+                                                            style:
+                                                                const TextStyle(
+                                                                  fontSize: 12,
+                                                                  color: Colors
+                                                                      .grey,
+                                                                ),
+                                                            maxLines: 1,
+                                                            overflow:
+                                                                TextOverflow
+                                                                    .ellipsis,
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                    const Icon(
+                                                      Icons.play_arrow,
+                                                      color: Colors.white70,
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+                                            }),
                                           )
                                         else
                                           GridView.builder(
@@ -418,27 +531,86 @@ class _HomePageState extends State<HomePage> {
                                             i,
                                           ) {
                                             final item = items[i];
-
-                                            return ListTile(
-                                              leading: ClipRRect(
-                                                borderRadius:
-                                                    BorderRadius.circular(6),
-                                                child: Image.network(
-                                                  '${widget.server}/Items/${item['Id']}/Images/Primary',
-                                                  width: 48,
-                                                  height: 48,
-                                                  fit: BoxFit.cover,
-                                                  errorBuilder: (_, __, ___) =>
-                                                      const Icon(
-                                                        Icons.music_note,
-                                                      ),
-                                                ),
+                                            return Container(
+                                              margin: const EdgeInsets.only(
+                                                bottom: 12,
                                               ),
-                                              title: Text(item['Name'] ?? ''),
-                                              subtitle: Text(
-                                                item['Album'] ??
-                                                    item['AlbumArtist'] ??
-                                                    '',
+                                              padding: const EdgeInsets.all(10),
+                                              decoration: BoxDecoration(
+                                                color: Colors.black.withOpacity(
+                                                  0.05,
+                                                ),
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
+                                              ),
+                                              child: Row(
+                                                children: [
+                                                  ClipRRect(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          10,
+                                                        ),
+                                                    child: Image.network(
+                                                      '${widget.server}/Items/${item['Id']}/Images/Primary',
+                                                      width: 56,
+                                                      height: 56,
+                                                      fit: BoxFit.cover,
+                                                      errorBuilder:
+                                                          (
+                                                            _,
+                                                            __,
+                                                            ___,
+                                                          ) => const Icon(
+                                                            Icons.music_note,
+                                                            size: 30,
+                                                          ),
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 12),
+                                                  Expanded(
+                                                    child: Column(
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .start,
+                                                      children: [
+                                                        Text(
+                                                          item['Name'] ?? '',
+                                                          style:
+                                                              const TextStyle(
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w600,
+                                                                fontSize: 14,
+                                                              ),
+                                                          maxLines: 1,
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                        ),
+                                                        const SizedBox(
+                                                          height: 4,
+                                                        ),
+                                                        Text(
+                                                          item['Album'] ??
+                                                              item['AlbumArtist'] ??
+                                                              '',
+                                                          style:
+                                                              const TextStyle(
+                                                                fontSize: 12,
+                                                                color:
+                                                                    Colors.grey,
+                                                              ),
+                                                          maxLines: 1,
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                  const Icon(
+                                                    Icons.play_arrow,
+                                                    color: Colors.white70,
+                                                  ),
+                                                ],
                                               ),
                                             );
                                           }),
