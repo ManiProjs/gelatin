@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:gelatin/core/playback/playback_controller.dart';
+import 'package:gelatin/core/playback/playback_service.dart';
 import 'package:gelatin/core/storage/auth_storage.dart';
 import 'package:gelatin/features/auth/login_page.dart';
 import 'package:gelatin/features/home/widgets/poster_card.dart';
+import 'package:gelatin/features/player/player_page.dart';
 import '../../core/api/jellyfin_api.dart';
 
 class HomePage extends StatefulWidget {
@@ -16,6 +19,8 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   late final JellyfinApi api;
+
+  late PlaybackService playback;
 
   List<dynamic> libs = [];
   String? selectedLibraryId;
@@ -34,6 +39,8 @@ class _HomePageState extends State<HomePage> {
     api = JellyfinApi(server: widget.server, token: widget.token);
 
     librariesFuture = api.getLibraries();
+
+    playback = PlaybackService(api);
 
     librariesFuture.then((data) {
       libs = data;
@@ -661,12 +668,43 @@ class _HomePageState extends State<HomePage> {
                                               final imageUrl =
                                                   '${widget.server}/Items/${item['Id']}/Images/Primary';
 
-                                              return PosterCard(
-                                                title: item['Name'] ?? '',
-                                                imageUrl: imageUrl,
-                                                headers: {
-                                                  'X-Emby-Token': widget.token,
+                                              return GestureDetector(
+                                                onTap: () async {
+                                                  final controller =
+                                                      PlaybackController(
+                                                        playback,
+                                                      );
+
+                                                  final streamUrl =
+                                                      await controller.resolve(
+                                                        item['Id'],
+                                                      );
+
+                                                  Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder: (_) =>
+                                                          PlayerPage(
+                                                            url: streamUrl,
+                                                            title:
+                                                                item['Name'] ??
+                                                                '',
+                                                            headers: {
+                                                              'X-Emby-Token':
+                                                                  widget.token,
+                                                            },
+                                                          ),
+                                                    ),
+                                                  );
                                                 },
+                                                child: PosterCard(
+                                                  title: item['Name'] ?? '',
+                                                  imageUrl: imageUrl,
+                                                  headers: {
+                                                    'X-Emby-Token':
+                                                        widget.token,
+                                                  },
+                                                ),
                                               );
                                             },
                                           ),
