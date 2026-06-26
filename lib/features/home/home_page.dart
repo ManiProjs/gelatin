@@ -233,69 +233,91 @@ class _HomePageState extends State<HomePage> {
 
                                       return Stack(
                                         children: [
-                                          Container(
-                                            height: 420,
-                                            margin: const EdgeInsets.only(
-                                              left: 12,
-                                              right: 12,
-                                              top: 12,
-                                              bottom: 16,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              borderRadius:
-                                                  BorderRadius.circular(16),
-                                              image: DecorationImage(
-                                                image: NetworkImage(
-                                                  '${widget.server}/Items/${item['Id']}/Images/Backdrop',
+                                          GestureDetector(
+                                            onTap: () {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (_) =>
+                                                      ItemDetailPage(
+                                                        server: widget.server,
+                                                        token: widget.token,
+                                                        item: item,
+                                                        playback: playback,
+                                                      ),
                                                 ),
-                                                fit: BoxFit.cover,
-                                              ),
-                                            ),
+                                              );
+                                            },
                                             child: Container(
+                                              height: 420,
+                                              margin: const EdgeInsets.only(
+                                                left: 12,
+                                                right: 12,
+                                                top: 12,
+                                                bottom: 16,
+                                              ),
                                               decoration: BoxDecoration(
                                                 borderRadius:
                                                     BorderRadius.circular(16),
-                                                gradient: const LinearGradient(
-                                                  begin: Alignment.bottomCenter,
-                                                  end: Alignment.topCenter,
-                                                  colors: [
-                                                    Color(0xCC000000),
-                                                    Colors.transparent,
-                                                  ],
+                                                image: DecorationImage(
+                                                  image: NetworkImage(
+                                                    '${widget.server}/Items/${item['Id']}/Images/Backdrop',
+                                                  ),
+                                                  fit: BoxFit.cover,
                                                 ),
                                               ),
-                                              alignment: Alignment.bottomLeft,
-                                              padding: const EdgeInsets.all(16),
-                                              child: Align(
-                                                alignment: Alignment.bottomLeft,
-                                                child: Padding(
-                                                  padding:
-                                                      const EdgeInsets.only(
-                                                        bottom: 8,
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                  borderRadius:
+                                                      BorderRadius.circular(16),
+                                                  gradient:
+                                                      const LinearGradient(
+                                                        begin: Alignment
+                                                            .bottomCenter,
+                                                        end:
+                                                            Alignment.topCenter,
+                                                        colors: [
+                                                          Color(0xCC000000),
+                                                          Colors.transparent,
+                                                        ],
                                                       ),
-                                                  child: Image.network(
-                                                    '${widget.server}/Items/${item['Id']}/Images/Logo',
-                                                    height: 110,
-                                                    fit: BoxFit.contain,
-                                                    errorBuilder:
-                                                        (
-                                                          context,
-                                                          error,
-                                                          stackTrace,
-                                                        ) {
-                                                          return Text(
-                                                            item['Name'] ?? '',
-                                                            style:
-                                                                const TextStyle(
-                                                                  color: Colors
-                                                                      .white,
-                                                                  fontSize: 22,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold,
-                                                                ),
-                                                          );
-                                                        },
+                                                ),
+                                                alignment: Alignment.bottomLeft,
+                                                padding: const EdgeInsets.all(
+                                                  16,
+                                                ),
+                                                child: Align(
+                                                  alignment:
+                                                      Alignment.bottomLeft,
+                                                  child: Padding(
+                                                    padding:
+                                                        const EdgeInsets.only(
+                                                          bottom: 8,
+                                                        ),
+                                                    child: Image.network(
+                                                      '${widget.server}/Items/${item['Id']}/Images/Logo',
+                                                      height: 110,
+                                                      fit: BoxFit.contain,
+                                                      errorBuilder:
+                                                          (
+                                                            context,
+                                                            error,
+                                                            stackTrace,
+                                                          ) {
+                                                            return Text(
+                                                              item['Name'] ??
+                                                                  '',
+                                                              style: const TextStyle(
+                                                                color: Colors
+                                                                    .white,
+                                                                fontSize: 22,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold,
+                                                              ),
+                                                            );
+                                                          },
+                                                    ),
                                                   ),
                                                 ),
                                               ),
@@ -361,7 +383,6 @@ class _HomePageState extends State<HomePage> {
                                   ),
                                   builder: (context, snap) {
                                     final items = snap.data ?? [];
-
                                     if (snap.connectionState ==
                                         ConnectionState.waiting) {
                                       return const Padding(
@@ -369,7 +390,9 @@ class _HomePageState extends State<HomePage> {
                                         child: CircularProgressIndicator(),
                                       );
                                     }
-
+                                    final visibleItems = items
+                                        .take(10)
+                                        .toList();
                                     return Padding(
                                       padding: const EdgeInsets.only(
                                         left: 12,
@@ -377,31 +400,84 @@ class _HomePageState extends State<HomePage> {
                                         bottom: 24,
                                         top: 12,
                                       ),
-                                      child: GridView.builder(
-                                        shrinkWrap: true,
-                                        physics:
-                                            const NeverScrollableScrollPhysics(),
-                                        gridDelegate:
-                                            const SliverGridDelegateWithFixedCrossAxisCount(
-                                              crossAxisCount: 4,
-                                              mainAxisSpacing: 10,
-                                              crossAxisSpacing: 10,
-                                              childAspectRatio: 0.65,
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Text(
+                                                lib['Name'] ?? 'Movies',
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 20,
+                                                ),
+                                              ),
+                                              const Spacer(),
+                                              TextButton(
+                                                child: const Text('More...'),
+                                                onPressed: () {
+                                                  final idx = libs.indexWhere(
+                                                    (l) => l['Id'] == lib['Id'],
+                                                  );
+                                                  if (idx != -1) {
+                                                    setState(() {
+                                                      selectedIndex = idx + 1;
+                                                      selectedLibraryId =
+                                                          lib['Id'];
+                                                    });
+                                                  }
+                                                },
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 12),
+                                          SizedBox(
+                                            height: 250,
+                                            child: ListView.builder(
+                                              scrollDirection: Axis.horizontal,
+                                              itemCount: visibleItems.length,
+                                              itemBuilder: (context, i) {
+                                                final item = visibleItems[i];
+                                                final imageUrl =
+                                                    '${widget.server}/Items/${item['Id']}/Images/Primary';
+                                                return GestureDetector(
+                                                  onTap: () async {
+                                                    Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                        builder: (_) =>
+                                                            ItemDetailPage(
+                                                              server:
+                                                                  widget.server,
+                                                              token:
+                                                                  widget.token,
+                                                              item: item,
+                                                              playback:
+                                                                  playback,
+                                                            ),
+                                                      ),
+                                                    );
+                                                  },
+                                                  child: Container(
+                                                    width: 150,
+                                                    margin: EdgeInsets.only(
+                                                      right: 12,
+                                                    ),
+                                                    child: PosterCard(
+                                                      title: item['Name'] ?? '',
+                                                      imageUrl: imageUrl,
+                                                      headers: {
+                                                        'X-Emby-Token':
+                                                            widget.token,
+                                                      },
+                                                    ),
+                                                  ),
+                                                );
+                                              },
                                             ),
-                                        itemCount: items.length,
-                                        itemBuilder: (context, i) {
-                                          final item = items[i];
-                                          final imageUrl =
-                                              '${widget.server}/Items/${item['Id']}/Images/Primary';
-
-                                          return PosterCard(
-                                            title: item['Name'] ?? '',
-                                            imageUrl: imageUrl,
-                                            headers: {
-                                              'X-Emby-Token': widget.token,
-                                            },
-                                          );
-                                        },
+                                          ),
+                                        ],
                                       ),
                                     );
                                   },
@@ -417,7 +493,6 @@ class _HomePageState extends State<HomePage> {
                                   ),
                                   builder: (context, snap) {
                                     final items = snap.data ?? [];
-
                                     if (snap.connectionState ==
                                         ConnectionState.waiting) {
                                       return const Padding(
@@ -425,7 +500,9 @@ class _HomePageState extends State<HomePage> {
                                         child: CircularProgressIndicator(),
                                       );
                                     }
-
+                                    final visibleItems = items
+                                        .take(10)
+                                        .toList();
                                     return Padding(
                                       padding: const EdgeInsets.only(
                                         left: 12,
@@ -436,82 +513,139 @@ class _HomePageState extends State<HomePage> {
                                       child: Column(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
-                                        children: List.generate(items.length, (
-                                          i,
-                                        ) {
-                                          final item = items[i];
-
-                                          return Container(
-                                            margin: const EdgeInsets.only(
-                                              bottom: 12,
-                                            ),
-                                            padding: const EdgeInsets.all(10),
-                                            decoration: BoxDecoration(
-                                              color: Colors.black.withValues(
-                                                alpha: 0.05,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Text(
+                                                lib['Name'] ?? 'Music',
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 20,
+                                                ),
                                               ),
-                                              borderRadius:
-                                                  BorderRadius.circular(12),
-                                            ),
-                                            child: Row(
-                                              children: [
-                                                ClipRRect(
-                                                  borderRadius:
-                                                      BorderRadius.circular(10),
-                                                  child: Image.network(
-                                                    '${widget.server}/Items/${item['Id']}/Images/Primary',
-                                                    width: 56,
-                                                    height: 56,
-                                                    fit: BoxFit.cover,
-                                                    errorBuilder: (_, _, _) =>
-                                                        const Icon(
-                                                          Icons.music_note,
-                                                          size: 30,
+                                              const Spacer(),
+                                              TextButton(
+                                                child: const Text('More...'),
+                                                onPressed: () {
+                                                  final idx = libs.indexWhere(
+                                                    (l) => l['Id'] == lib['Id'],
+                                                  );
+                                                  if (idx != -1) {
+                                                    setState(() {
+                                                      selectedIndex = idx + 1;
+                                                      selectedLibraryId =
+                                                          lib['Id'];
+                                                    });
+                                                  }
+                                                },
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 12),
+                                          SizedBox(
+                                            height: 110,
+                                            child: ListView.builder(
+                                              scrollDirection: Axis.horizontal,
+                                              itemCount: visibleItems.length,
+                                              itemBuilder: (context, i) {
+                                                final item = visibleItems[i];
+                                                return Container(
+                                                  width: 260,
+                                                  margin: EdgeInsets.only(
+                                                    right: 12,
+                                                  ),
+                                                  padding: const EdgeInsets.all(
+                                                    10,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.black
+                                                        .withAlpha(13),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          12,
                                                         ),
                                                   ),
-                                                ),
-                                                const SizedBox(width: 12),
-                                                Expanded(
-                                                  child: Column(
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .start,
+                                                  child: Row(
                                                     children: [
-                                                      Text(
-                                                        item['Name'] ?? '',
-                                                        maxLines: 1,
-                                                        overflow: TextOverflow
-                                                            .ellipsis,
-                                                        style: const TextStyle(
-                                                          fontWeight:
-                                                              FontWeight.w600,
-                                                          fontSize: 14,
+                                                      ClipRRect(
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              10,
+                                                            ),
+                                                        child: Image.network(
+                                                          '${widget.server}/Items/${item['Id']}/Images/Primary',
+                                                          width: 56,
+                                                          height: 56,
+                                                          fit: BoxFit.cover,
+                                                          errorBuilder:
+                                                              (
+                                                                _,
+                                                                __,
+                                                                ___,
+                                                              ) => const Icon(
+                                                                Icons
+                                                                    .music_note,
+                                                                size: 30,
+                                                              ),
                                                         ),
                                                       ),
-                                                      const SizedBox(height: 4),
-                                                      Text(
-                                                        item['Album'] ??
-                                                            item['AlbumArtist'] ??
-                                                            '',
-                                                        maxLines: 1,
-                                                        overflow: TextOverflow
-                                                            .ellipsis,
-                                                        style: const TextStyle(
-                                                          fontSize: 12,
-                                                          color: Colors.grey,
+                                                      const SizedBox(width: 12),
+                                                      Expanded(
+                                                        child: Column(
+                                                          crossAxisAlignment:
+                                                              CrossAxisAlignment
+                                                                  .start,
+                                                          mainAxisAlignment:
+                                                              MainAxisAlignment
+                                                                  .center,
+                                                          children: [
+                                                            Text(
+                                                              item['Name'] ??
+                                                                  '',
+                                                              maxLines: 1,
+                                                              overflow:
+                                                                  TextOverflow
+                                                                      .ellipsis,
+                                                              style: const TextStyle(
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w600,
+                                                                fontSize: 14,
+                                                              ),
+                                                            ),
+                                                            const SizedBox(
+                                                              height: 4,
+                                                            ),
+                                                            Text(
+                                                              item['Album'] ??
+                                                                  item['AlbumArtist'] ??
+                                                                  '',
+                                                              maxLines: 1,
+                                                              overflow:
+                                                                  TextOverflow
+                                                                      .ellipsis,
+                                                              style:
+                                                                  const TextStyle(
+                                                                    fontSize:
+                                                                        12,
+                                                                    color: Colors
+                                                                        .grey,
+                                                                  ),
+                                                            ),
+                                                          ],
                                                         ),
+                                                      ),
+                                                      const Icon(
+                                                        Icons.play_arrow,
+                                                        color: Colors.white70,
                                                       ),
                                                     ],
                                                   ),
-                                                ),
-                                                const Icon(
-                                                  Icons.play_arrow,
-                                                  color: Colors.white70,
-                                                ),
-                                              ],
+                                                );
+                                              },
                                             ),
-                                          );
-                                        }),
+                                          ),
+                                        ],
                                       ),
                                     );
                                   },
