@@ -139,11 +139,30 @@ class ItemDetailPage extends StatelessWidget {
                                 child: ElevatedButton.icon(
                                   onPressed: () async {
                                     try {
-                                      final controller = PlaybackController(
-                                        playback,
-                                      );
-                                      final streamUrl = await controller
-                                          .resolve(item['Id']);
+                                      final id = item['Id'].toString();
+                                      final type = item['Type'];
+
+                                      String streamUrl;
+
+                                      if (type == 'Audio') {
+                                        // direct music stream (no PlaybackInfo)
+                                        streamUrl = '$server/Audio/$id/stream';
+                                      } else {
+                                        try {
+                                          final controller = PlaybackController(
+                                            playback,
+                                          );
+                                          streamUrl = await controller.resolve(
+                                            id,
+                                          );
+                                        } catch (_) {
+                                          // fallback if PlaybackInfo fails
+                                          streamUrl =
+                                              '$server/Items/$id/Download';
+                                        }
+                                      }
+
+                                      if (!context.mounted) return;
 
                                       Navigator.push(
                                         context,
@@ -157,11 +176,14 @@ class ItemDetailPage extends StatelessWidget {
                                       );
                                     } catch (e) {
                                       if (!context.mounted) return;
+
                                       ScaffoldMessenger.of(
                                         context,
                                       ).showSnackBar(
-                                        SnackBar(
-                                          content: Text('Playback failed'),
+                                        const SnackBar(
+                                          content: Text(
+                                            'Playback unavailable for this item',
+                                          ),
                                         ),
                                       );
                                     }
