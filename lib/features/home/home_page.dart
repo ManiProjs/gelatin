@@ -4,6 +4,8 @@ import 'package:gelatin/core/storage/auth_storage.dart';
 import 'package:gelatin/features/auth/login_page.dart';
 import 'package:gelatin/features/details/item_detail_page.dart';
 import 'package:gelatin/features/home/widgets/poster_card.dart';
+import 'package:gelatin/app.dart';
+import 'package:gelatin/features/themes/theme_controller.dart';
 import '../../core/api/jellyfin_api.dart';
 
 class HomePage extends StatefulWidget {
@@ -57,6 +59,10 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final text = theme.textTheme;
+
     return Scaffold(
       body: FutureBuilder<List<dynamic>>(
         future: librariesFuture,
@@ -153,6 +159,75 @@ class _HomePageState extends State<HomePage> {
                                           ),
                                         ),
                                         const SizedBox(height: 16),
+                                        ListTile(
+                                          leading: const Icon(
+                                            Icons.palette_outlined,
+                                          ),
+                                          title: const Text('Appearance'),
+                                          subtitle: Text(switch (GelatinApp
+                                              .themeController
+                                              .mode) {
+                                            ThemeMode.system => 'System',
+                                            ThemeMode.light => 'Light',
+                                            ThemeMode.dark => 'Dark',
+                                          }),
+                                          onTap: () {
+                                            Navigator.of(context).pop();
+
+                                            showModalBottomSheet(
+                                              context: context,
+                                              builder: (context) => SafeArea(
+                                                child: Column(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  children: [
+                                                    ListTile(
+                                                      leading: const Icon(
+                                                        Icons.brightness_auto,
+                                                      ),
+                                                      title: const Text(
+                                                        'System',
+                                                      ),
+                                                      onTap: () async {
+                                                        GelatinApp
+                                                            .themeController
+                                                            .setSystem();
+                                                        Navigator.pop(context);
+                                                      },
+                                                    ),
+                                                    ListTile(
+                                                      leading: const Icon(
+                                                        Icons.light_mode,
+                                                      ),
+                                                      title: const Text(
+                                                        'Light',
+                                                      ),
+                                                      onTap: () async {
+                                                        GelatinApp
+                                                            .themeController
+                                                            .setLight();
+                                                        Navigator.pop(context);
+                                                      },
+                                                    ),
+                                                    ListTile(
+                                                      leading: const Icon(
+                                                        Icons.dark_mode,
+                                                      ),
+                                                      title: const Text('Dark'),
+                                                      onTap: () async {
+                                                        GelatinApp
+                                                            .themeController
+                                                            .setDark();
+                                                        Navigator.pop(context);
+                                                      },
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                        const Divider(),
                                         ListTile(
                                           leading: const Icon(Icons.logout),
                                           title: const Text('Sign out'),
