@@ -138,22 +138,33 @@ class ItemDetailPage extends StatelessWidget {
                                 width: 220,
                                 child: ElevatedButton.icon(
                                   onPressed: () async {
-                                    final controller = PlaybackController(
-                                      playback,
-                                    );
-                                    final streamUrl = await controller.resolve(
-                                      item['Id'],
-                                    );
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) => PlayerPage(
-                                          url: streamUrl,
-                                          title: item['Name'] ?? '',
-                                          headers: {'X-Emby-Token': token},
+                                    try {
+                                      final controller = PlaybackController(
+                                        playback,
+                                      );
+                                      final streamUrl = await controller
+                                          .resolve(item['Id']);
+
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => PlayerPage(
+                                            url: streamUrl,
+                                            title: item['Name'] ?? '',
+                                            headers: {'X-Emby-Token': token},
+                                          ),
                                         ),
-                                      ),
-                                    );
+                                      );
+                                    } catch (e) {
+                                      if (!context.mounted) return;
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text('Playback failed'),
+                                        ),
+                                      );
+                                    }
                                   },
                                   icon: const Icon(Icons.play_arrow),
                                   label: const Text("Play"),

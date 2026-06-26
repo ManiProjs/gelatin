@@ -5,6 +5,7 @@ import 'package:gelatin/features/auth/login_page.dart';
 import 'package:gelatin/features/details/item_detail_page.dart';
 import 'package:gelatin/features/home/widgets/poster_card.dart';
 import 'package:gelatin/app.dart';
+import 'package:gelatin/features/search/jellyfin_search_delegate.dart';
 import '../../core/api/jellyfin_api.dart';
 
 class HomePage extends StatefulWidget {
@@ -101,7 +102,6 @@ class _HomePageState extends State<HomePage> {
                     setState(() {
                       heroIndex = 0;
                       selectedIndex = index;
-
                       if (index == 0) {
                         selectedLibraryId = libs.isNotEmpty
                             ? libs.first['Id']
@@ -109,7 +109,6 @@ class _HomePageState extends State<HomePage> {
                       } else {
                         selectedLibraryId = libs[index - 1]['Id'];
                       }
-
                       heroLibraryId = selectedLibraryId;
                     });
                   },
@@ -129,16 +128,15 @@ class _HomePageState extends State<HomePage> {
                         label: Text(lib['Name'] ?? 'Unknown'),
                       ),
                   ],
-                  trailing: Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Divider(),
-                        const SizedBox(height: 8),
-                        IconButton(
-                          icon: const Icon(Icons.settings),
-                          onPressed: () {
+                  trailing: Expanded(
+                    child: Align(
+                      alignment: Alignment.bottomCenter,
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(12),
+                          onTap: () {
+                            // Move the existing showModalBottomSheet(...) code from the current settings destination branch here unchanged.
                             showModalBottomSheet(
                               context: context,
                               builder: (context) {
@@ -170,7 +168,6 @@ class _HomePageState extends State<HomePage> {
                                           ),
                                           onTap: () {
                                             Navigator.of(context).pop();
-
                                             showModalBottomSheet(
                                               context: context,
                                               builder: (context) => SafeArea(
@@ -227,17 +224,14 @@ class _HomePageState extends State<HomePage> {
                                           title: const Text('Sign out'),
                                           onTap: () async {
                                             Navigator.of(context).pop();
-
                                             await AuthStorage.clear();
-
                                             if (!context.mounted) return;
-
                                             Navigator.of(
                                               context,
                                             ).pushAndRemoveUntil(
                                               MaterialPageRoute(
                                                 builder: (_) =>
-                                                    const LoginPage(), // or your actual login widget
+                                                    const LoginPage(),
                                               ),
                                               (route) => false,
                                             );
@@ -250,9 +244,21 @@ class _HomePageState extends State<HomePage> {
                               },
                             );
                           },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 12,
+                            ),
+                            child: Row(
+                              children: const [
+                                Icon(Icons.settings),
+                                SizedBox(width: 24),
+                                Text('Settings'),
+                              ],
+                            ),
+                          ),
                         ),
-                        const Text('Settings', style: TextStyle(fontSize: 12)),
-                      ],
+                      ),
                     ),
                   ),
                 ),
@@ -265,6 +271,31 @@ class _HomePageState extends State<HomePage> {
                       : selectedIndex == 0
                       ? CustomScrollView(
                           slivers: [
+                            // Insert SearchBar at the top of Home slivers
+                            SliverToBoxAdapter(
+                              child: Padding(
+                                padding: const EdgeInsets.all(20),
+                                child: SizedBox(
+                                  height: 48,
+                                  child: SearchBar(
+                                    readOnly: true,
+                                    leading: const Icon(Icons.search),
+                                    hintText: 'Search',
+                                    onTap: () {
+                                      showSearch(
+                                        context: context,
+                                        delegate: JellyfinSearchDelegate(
+                                          api: api,
+                                          server: widget.server,
+                                          token: widget.token,
+                                          playback: playback,
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ),
                             SliverToBoxAdapter(
                               child: StatefulBuilder(
                                 builder: (context, setHeroState) {
@@ -847,10 +878,251 @@ class _HomePageState extends State<HomePage> {
                                               itemCount: visibleItems.length,
                                               itemBuilder: (context, i) {
                                                 final item = visibleItems[i];
-                                                return Container(
-                                                  width: 260,
+                                                return GestureDetector(
+                                                  onTap: () {
+                                                    Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                        builder: (_) =>
+                                                            ItemDetailPage(
+                                                              server:
+                                                                  widget.server,
+                                                              token:
+                                                                  widget.token,
+                                                              item: item,
+                                                              playback:
+                                                                  playback,
+                                                            ),
+                                                      ),
+                                                    );
+                                                  },
+                                                  child: Container(
+                                                    width: 260,
+                                                    margin:
+                                                        const EdgeInsets.only(
+                                                          right: 14,
+                                                        ),
+                                                    padding:
+                                                        const EdgeInsets.all(
+                                                          12,
+                                                        ),
+                                                    decoration: BoxDecoration(
+                                                      color: Theme.of(context)
+                                                          .colorScheme
+                                                          .surfaceContainerHighest,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            14,
+                                                          ),
+                                                    ),
+                                                    child: Row(
+                                                      children: [
+                                                        ClipRRect(
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                10,
+                                                              ),
+                                                          child: Image.network(
+                                                            '${widget.server}/Items/${item['Id']}/Images/Primary',
+                                                            width: 64,
+                                                            height: 64,
+                                                            fit: BoxFit.cover,
+                                                            errorBuilder:
+                                                                (
+                                                                  _,
+                                                                  __,
+                                                                  ___,
+                                                                ) => const Icon(
+                                                                  Icons
+                                                                      .music_note,
+                                                                  size: 36,
+                                                                  color: Colors
+                                                                      .white54,
+                                                                ),
+                                                          ),
+                                                        ),
+                                                        const SizedBox(
+                                                          width: 16,
+                                                        ),
+                                                        Expanded(
+                                                          child: Column(
+                                                            crossAxisAlignment:
+                                                                CrossAxisAlignment
+                                                                    .start,
+                                                            mainAxisAlignment:
+                                                                MainAxisAlignment
+                                                                    .center,
+                                                            children: [
+                                                              Text(
+                                                                item['Name'] ??
+                                                                    '',
+                                                                maxLines: 1,
+                                                                overflow:
+                                                                    TextOverflow
+                                                                        .ellipsis,
+                                                                style: const TextStyle(
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w600,
+                                                                  fontSize: 16,
+                                                                ),
+                                                              ),
+                                                              const SizedBox(
+                                                                height: 4,
+                                                              ),
+                                                              Text(
+                                                                item['Album'] ??
+                                                                    item['AlbumArtist'] ??
+                                                                    '',
+                                                                maxLines: 1,
+                                                                overflow:
+                                                                    TextOverflow
+                                                                        .ellipsis,
+                                                                style: const TextStyle(
+                                                                  fontSize: 13,
+                                                                  color: Colors
+                                                                      .grey,
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                        Padding(
+                                                          padding:
+                                                              const EdgeInsets.only(
+                                                                left: 8.0,
+                                                              ),
+                                                          child: Material(
+                                                            color:
+                                                                Theme.of(
+                                                                      context,
+                                                                    )
+                                                                    .colorScheme
+                                                                    .primary,
+                                                            shape:
+                                                                const CircleBorder(),
+                                                            child: InkWell(
+                                                              customBorder:
+                                                                  const CircleBorder(),
+                                                              onTap: () {
+                                                                // Play action (kept as before)
+                                                              },
+                                                              child: const Padding(
+                                                                padding:
+                                                                    EdgeInsets.all(
+                                                                      6.0,
+                                                                    ),
+                                                                child: Icon(
+                                                                  Icons
+                                                                      .play_arrow_rounded,
+                                                                  size: 28,
+                                                                  color: Colors
+                                                                      .white,
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                          ],
+                        )
+                      : selectedLibraryId == null
+                      ? const Center(child: Text('No folder selected'))
+                      : CustomScrollView(
+                          slivers: [
+                            // Insert SearchBar at the top of library view slivers
+                            SliverToBoxAdapter(
+                              child: Padding(
+                                padding: const EdgeInsets.all(20),
+                                child: SizedBox(
+                                  height: 48,
+                                  child: SearchBar(
+                                    readOnly: true,
+                                    leading: const Icon(Icons.search),
+                                    hintText: 'Search',
+                                    onTap: () {
+                                      showSearch(
+                                        context: context,
+                                        delegate: JellyfinSearchDelegate(
+                                          api: api,
+                                          server: widget.server,
+                                          token: widget.token,
+                                          playback: playback,
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ),
+                            SliverToBoxAdapter(
+                              key: ValueKey(selectedLibraryId),
+                              child: FutureBuilder<List<dynamic>>(
+                                future: cache.putIfAbsent(
+                                  'lib_${selectedLibraryId!}',
+                                  () => api.getItems(selectedLibraryId!),
+                                ),
+                                builder: (context, snap) {
+                                  final items = snap.data ?? [];
+
+                                  if (snap.connectionState ==
+                                      ConnectionState.waiting) {
+                                    return const Padding(
+                                      padding: EdgeInsets.all(24),
+                                      child: CircularProgressIndicator(),
+                                    );
+                                  }
+
+                                  final lib = libs.firstWhere(
+                                    (e) => e['Id'] == selectedLibraryId,
+                                  );
+
+                                  final isMusic =
+                                      lib['CollectionType'] == 'music';
+
+                                  return Padding(
+                                    padding: const EdgeInsets.all(20),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        if (isMusic)
+                                          Column(
+                                            children: List.generate(items.length, (
+                                              i,
+                                            ) {
+                                              final item = items[i];
+                                              return GestureDetector(
+                                                onTap: () {
+                                                  Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder: (_) =>
+                                                          ItemDetailPage(
+                                                            server:
+                                                                widget.server,
+                                                            token: widget.token,
+                                                            item: item,
+                                                            playback: playback,
+                                                          ),
+                                                    ),
+                                                  );
+                                                },
+                                                child: Container(
                                                   margin: const EdgeInsets.only(
-                                                    right: 14,
+                                                    bottom: 14,
                                                   ),
                                                   padding: const EdgeInsets.all(
                                                     12,
@@ -896,23 +1168,20 @@ class _HomePageState extends State<HomePage> {
                                                           crossAxisAlignment:
                                                               CrossAxisAlignment
                                                                   .start,
-                                                          mainAxisAlignment:
-                                                              MainAxisAlignment
-                                                                  .center,
                                                           children: [
                                                             Text(
                                                               item['Name'] ??
                                                                   '',
-                                                              maxLines: 1,
-                                                              overflow:
-                                                                  TextOverflow
-                                                                      .ellipsis,
                                                               style: const TextStyle(
                                                                 fontWeight:
                                                                     FontWeight
                                                                         .w600,
                                                                 fontSize: 16,
                                                               ),
+                                                              maxLines: 1,
+                                                              overflow:
+                                                                  TextOverflow
+                                                                      .ellipsis,
                                                             ),
                                                             const SizedBox(
                                                               height: 4,
@@ -921,10 +1190,6 @@ class _HomePageState extends State<HomePage> {
                                                               item['Album'] ??
                                                                   item['AlbumArtist'] ??
                                                                   '',
-                                                              maxLines: 1,
-                                                              overflow:
-                                                                  TextOverflow
-                                                                      .ellipsis,
                                                               style:
                                                                   const TextStyle(
                                                                     fontSize:
@@ -932,6 +1197,10 @@ class _HomePageState extends State<HomePage> {
                                                                     color: Colors
                                                                         .grey,
                                                                   ),
+                                                              maxLines: 1,
+                                                              overflow:
+                                                                  TextOverflow
+                                                                      .ellipsis,
                                                             ),
                                                           ],
                                                         ),
@@ -971,174 +1240,6 @@ class _HomePageState extends State<HomePage> {
                                                       ),
                                                     ],
                                                   ),
-                                                );
-                                              },
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                          ],
-                        )
-                      : selectedLibraryId == null
-                      ? const Center(child: Text('No folder selected'))
-                      : CustomScrollView(
-                          slivers: [
-                            SliverToBoxAdapter(
-                              key: ValueKey(selectedLibraryId),
-                              child: FutureBuilder<List<dynamic>>(
-                                future: cache.putIfAbsent(
-                                  'lib_${selectedLibraryId!}',
-                                  () => api.getItems(selectedLibraryId!),
-                                ),
-                                builder: (context, snap) {
-                                  final items = snap.data ?? [];
-
-                                  if (snap.connectionState ==
-                                      ConnectionState.waiting) {
-                                    return const Padding(
-                                      padding: EdgeInsets.all(24),
-                                      child: CircularProgressIndicator(),
-                                    );
-                                  }
-
-                                  final lib = libs.firstWhere(
-                                    (e) => e['Id'] == selectedLibraryId,
-                                  );
-
-                                  final isMusic =
-                                      lib['CollectionType'] == 'music';
-
-                                  return Padding(
-                                    padding: const EdgeInsets.all(20),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        if (isMusic)
-                                          Column(
-                                            children: List.generate(items.length, (
-                                              i,
-                                            ) {
-                                              final item = items[i];
-                                              return Container(
-                                                margin: const EdgeInsets.only(
-                                                  bottom: 14,
-                                                ),
-                                                padding: const EdgeInsets.all(
-                                                  12,
-                                                ),
-                                                decoration: BoxDecoration(
-                                                  color: Theme.of(context)
-                                                      .colorScheme
-                                                      .surfaceContainerHighest,
-                                                  borderRadius:
-                                                      BorderRadius.circular(14),
-                                                ),
-                                                child: Row(
-                                                  children: [
-                                                    ClipRRect(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                            10,
-                                                          ),
-                                                      child: Image.network(
-                                                        '${widget.server}/Items/${item['Id']}/Images/Primary',
-                                                        width: 64,
-                                                        height: 64,
-                                                        fit: BoxFit.cover,
-                                                        errorBuilder:
-                                                            (
-                                                              _,
-                                                              __,
-                                                              ___,
-                                                            ) => const Icon(
-                                                              Icons.music_note,
-                                                              size: 36,
-                                                              color: Colors
-                                                                  .white54,
-                                                            ),
-                                                      ),
-                                                    ),
-                                                    const SizedBox(width: 16),
-                                                    Expanded(
-                                                      child: Column(
-                                                        crossAxisAlignment:
-                                                            CrossAxisAlignment
-                                                                .start,
-                                                        children: [
-                                                          Text(
-                                                            item['Name'] ?? '',
-                                                            style:
-                                                                const TextStyle(
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .w600,
-                                                                  fontSize: 16,
-                                                                ),
-                                                            maxLines: 1,
-                                                            overflow:
-                                                                TextOverflow
-                                                                    .ellipsis,
-                                                          ),
-                                                          const SizedBox(
-                                                            height: 4,
-                                                          ),
-                                                          Text(
-                                                            item['Album'] ??
-                                                                item['AlbumArtist'] ??
-                                                                '',
-                                                            style:
-                                                                const TextStyle(
-                                                                  fontSize: 13,
-                                                                  color: Colors
-                                                                      .grey,
-                                                                ),
-                                                            maxLines: 1,
-                                                            overflow:
-                                                                TextOverflow
-                                                                    .ellipsis,
-                                                          ),
-                                                        ],
-                                                      ),
-                                                    ),
-                                                    Padding(
-                                                      padding:
-                                                          const EdgeInsets.only(
-                                                            left: 8.0,
-                                                          ),
-                                                      child: Material(
-                                                        color: Theme.of(
-                                                          context,
-                                                        ).colorScheme.primary,
-                                                        shape:
-                                                            const CircleBorder(),
-                                                        child: InkWell(
-                                                          customBorder:
-                                                              const CircleBorder(),
-                                                          onTap: () {
-                                                            // Play action (kept as before)
-                                                          },
-                                                          child: const Padding(
-                                                            padding:
-                                                                EdgeInsets.all(
-                                                                  6.0,
-                                                                ),
-                                                            child: Icon(
-                                                              Icons
-                                                                  .play_arrow_rounded,
-                                                              size: 28,
-                                                              color:
-                                                                  Colors.white,
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
                                                 ),
                                               );
                                             }),

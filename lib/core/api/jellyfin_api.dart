@@ -32,4 +32,17 @@ class JellyfinApi {
 
     return res.data['Items'] ?? [];
   }
+
+  Future<List<dynamic>> search(String query) async {
+    final res = await dio.get(
+      '/Items',
+      queryParameters: {
+        'SearchTerm': query,
+        'Recursive': true,
+        'Fields': 'PrimaryImageAspectRatio,MediaSourceCount,Overview',
+      },
+    );
+
+    return (res.data['Items'] as List?) ?? [];
+  }
 }
