@@ -5,7 +5,6 @@ import 'package:gelatin/features/auth/login_page.dart';
 import 'package:gelatin/features/details/item_detail_page.dart';
 import 'package:gelatin/features/home/widgets/poster_card.dart';
 import 'package:gelatin/app.dart';
-import 'package:gelatin/features/themes/theme_controller.dart';
 import '../../core/api/jellyfin_api.dart';
 
 class HomePage extends StatefulWidget {
@@ -59,10 +58,6 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-    final text = theme.textTheme;
-
     return Scaffold(
       body: FutureBuilder<List<dynamic>>(
         future: librariesFuture,
