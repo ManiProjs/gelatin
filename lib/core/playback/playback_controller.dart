@@ -6,8 +6,17 @@ class PlaybackController {
   PlaybackController(this.service);
 
   Future<String> resolve(String itemId) async {
-    final info = await service.getStreamInfo(itemId);
+    try {
+      final info = await service
+          .getStreamInfo(itemId)
+          .timeout(const Duration(seconds: 10));
 
-    return service.buildHlsUrl(info);
+      final url = service.buildHlsUrl(info);
+
+      return url;
+    } catch (e) {
+      // Prevent app crash on playback failure
+      return '';
+    }
   }
 }
