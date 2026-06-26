@@ -25,7 +25,7 @@ jobs:
         run: flutter pub get
 
       - name: Build Windows
-        run: flutter build windows --release
+        run: flutter build windows
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -54,7 +54,7 @@ jobs:
         run: flutter pub get
 
       - name: Build Linux
-        run: flutter build linux --release
+        run: flutter build linux
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -81,7 +81,7 @@ jobs:
         run: flutter config --enable-macos-desktop
 
       - name: Build macOS
-        run: flutter build macos --release
+        run: flutter build macos
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
