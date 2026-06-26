@@ -1,17 +1,17 @@
-# gelatin
+# Gelatin
 
-A new Flutter project.
+A sleek Jellyfin client
 
-## Getting Started
+## Downloads
 
-This project is a starting point for a Flutter application.
+Visit [GitHub releases](https://github.com/ManiProjs/gelatin/releases)
 
-A few resources to get you started if this is your first Flutter project:
+## How to build it?
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+You need Flutter, Dart and their requirements
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Run `flutter pub get` to get the pubs (depenedencies).
+
+Run `flutter build` to build it.
+
+Run `flutter run` to run it in debug mode

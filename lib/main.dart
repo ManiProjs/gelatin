@@ -16,6 +16,7 @@ Future<void> main() async {
   final prefs = await SharedPreferences.getInstance();
 
   const windowOptions = WindowOptions(
+    title: 'Gelatin',
     size: Size(1280, 720),
     center: true,
     backgroundColor: Colors.transparent,
