@@ -3,17 +3,15 @@ import 'package:gelatin/core/storage/auth_storage.dart';
 import 'package:gelatin/features/home/home_page.dart';
 import '../../core/api/jellyfin_client.dart';
 
-class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+class ServerPage extends StatefulWidget {
+  const ServerPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  State<ServerPage> createState() => _ServerPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _ServerPageState extends State<ServerPage> {
   final serverController = TextEditingController();
-  final usernameController = TextEditingController();
-  final passwordController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +36,75 @@ class _LoginPageState extends State<LoginPage> {
                     decoration: const InputDecoration(labelText: 'Server URL'),
                   ),
 
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 24),
+
+                  FilledButton(
+                    onPressed: _continue,
+                    child: const Text('Continue'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _continue() async {
+    final server = serverController.text.trim();
+    if (server.isEmpty) return;
+
+    if (!mounted) return;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => LoginPage(server: server)),
+    );
+  }
+}
+
+class LoginPage extends StatefulWidget {
+  final String server;
+  const LoginPage({super.key, required this.server});
+
+  @override
+  State<LoginPage> createState() => _LoginPageStateAuth();
+}
+
+class _LoginPageStateAuth extends State<LoginPage> {
+  final usernameController = TextEditingController();
+  final passwordController = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (_) => const ServerPage()),
+              (route) => false,
+            );
+          },
+        ),
+      ),
+      body: Center(
+        child: SizedBox(
+          width: 400,
+          child: Card(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Gelatin',
+                    style: Theme.of(context).textTheme.headlineMedium,
+                  ),
+                  const SizedBox(height: 24),
 
                   TextField(
                     controller: usernameController,
@@ -70,7 +136,7 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<void> _connect() async {
     try {
-      final client = JellyfinClient(serverController.text.trim());
+      final client = JellyfinClient(widget.server);
 
       final auth = await client.login(
         username: usernameController.text.trim(),
@@ -79,7 +145,7 @@ class _LoginPageState extends State<LoginPage> {
 
       await AuthStorage.saveAuth(
         token: auth.accessToken,
-        server: serverController.text.trim(),
+        server: widget.server,
         userId: auth.userId,
       );
 
@@ -88,10 +154,8 @@ class _LoginPageState extends State<LoginPage> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (_) => HomePage(
-            server: serverController.text.trim(),
-            token: auth.accessToken,
-          ),
+          builder: (_) =>
+              HomePage(server: widget.server, token: auth.accessToken),
         ),
       );
     } catch (e) {

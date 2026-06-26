@@ -36,7 +36,7 @@ class GelatinApp extends StatelessWidget {
       return HomePage(server: session.server!, token: session.token!);
     }
 
-    return const LoginPage();
+    return const ServerPage();
   }
 
   @override

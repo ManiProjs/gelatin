@@ -230,8 +230,9 @@ class _HomePageState extends State<HomePage> {
                                               context,
                                             ).pushAndRemoveUntil(
                                               MaterialPageRoute(
-                                                builder: (_) =>
-                                                    const LoginPage(),
+                                                builder: (_) => LoginPage(
+                                                  server: widget.server,
+                                                ),
                                               ),
                                               (route) => false,
                                             );
