@@ -58,6 +58,8 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final themeController = ThemeControllerScope.of(context);
+
     return Scaffold(
       body: FutureBuilder<List<dynamic>>(
         future: librariesFuture,
@@ -159,13 +161,13 @@ class _HomePageState extends State<HomePage> {
                                             Icons.palette_outlined,
                                           ),
                                           title: const Text('Appearance'),
-                                          subtitle: Text(switch (GelatinApp
-                                              .themeController
-                                              .mode) {
-                                            ThemeMode.system => 'System',
-                                            ThemeMode.light => 'Light',
-                                            ThemeMode.dark => 'Dark',
-                                          }),
+                                          subtitle: Text(
+                                            switch (themeController.mode) {
+                                              ThemeMode.system => 'System',
+                                              ThemeMode.light => 'Light',
+                                              ThemeMode.dark => 'Dark',
+                                            },
+                                          ),
                                           onTap: () {
                                             Navigator.of(context).pop();
 
@@ -184,8 +186,7 @@ class _HomePageState extends State<HomePage> {
                                                         'System',
                                                       ),
                                                       onTap: () async {
-                                                        GelatinApp
-                                                            .themeController
+                                                        themeController
                                                             .setSystem();
                                                         Navigator.pop(context);
                                                       },
@@ -198,8 +199,7 @@ class _HomePageState extends State<HomePage> {
                                                         'Light',
                                                       ),
                                                       onTap: () async {
-                                                        GelatinApp
-                                                            .themeController
+                                                        themeController
                                                             .setLight();
                                                         Navigator.pop(context);
                                                       },
@@ -210,8 +210,7 @@ class _HomePageState extends State<HomePage> {
                                                       ),
                                                       title: const Text('Dark'),
                                                       onTap: () async {
-                                                        GelatinApp
-                                                            .themeController
+                                                        themeController
                                                             .setDark();
                                                         Navigator.pop(context);
                                                       },
