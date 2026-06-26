@@ -70,10 +70,33 @@ class _HomePageState extends State<HomePage> {
           }
 
           if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
+            WidgetsBinding.instance.addPostFrameCallback((_) async {
+              await AuthStorage.clear();
+              if (!context.mounted) return;
+
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (_) => const ServerPage()),
+                (route) => false,
+              );
+            });
+
+            return const Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('Failed to connect to Jellyfin'),
+                  SizedBox(height: 12),
+                  CircularProgressIndicator(),
+                ],
+              ),
+            );
           }
 
           final libs = snapshot.data ?? [];
+          final filteredLibs = libs.where((l) {
+            final type = (l['CollectionType'] ?? '').toString().toLowerCase();
+            return type != 'folders';
+          }).toList();
           final activeLibs = selectedIndex == 0
               ? libs
               : [libs[selectedIndex - 1]];
@@ -103,11 +126,11 @@ class _HomePageState extends State<HomePage> {
                       heroIndex = 0;
                       selectedIndex = index;
                       if (index == 0) {
-                        selectedLibraryId = libs.isNotEmpty
-                            ? libs.first['Id']
+                        selectedLibraryId = filteredLibs.isNotEmpty
+                            ? filteredLibs.first['Id']
                             : null;
                       } else {
-                        selectedLibraryId = libs[index - 1]['Id'];
+                        selectedLibraryId = filteredLibs[index - 1]['Id'];
                       }
                       heroLibraryId = selectedLibraryId;
                     });
@@ -118,14 +141,62 @@ class _HomePageState extends State<HomePage> {
                       icon: Icon(Icons.home),
                       label: Text('Home'),
                     ),
-                    for (final lib in libs)
+                    for (int i = 0; i < filteredLibs.length; i++)
                       NavigationRailDestination(
-                        icon: Icon(
-                          lib['CollectionType'] == 'music'
-                              ? Icons.music_note
-                              : Icons.movie,
+                        icon: Builder(
+                          builder: (context) {
+                            final lib = filteredLibs[i];
+                            final isSelected = selectedIndex == i + 1;
+
+                            final type = (lib['CollectionType'] ?? '')
+                                .toString()
+                                .toLowerCase();
+
+                            IconData iconData;
+                            switch (type) {
+                              case 'music':
+                                iconData = Icons.music_note;
+                                break;
+                              case 'movies':
+                                iconData = Icons.movie;
+                                break;
+                              case 'tvshows':
+                              case 'tv':
+                              case 'series':
+                                iconData = Icons.tv;
+                                break;
+                              case 'photos':
+                                iconData = Icons.photo_library;
+                                break;
+                              case 'books':
+                                iconData = Icons.menu_book;
+                                break;
+                              default:
+                                iconData = Icons.folder;
+                            }
+
+                            final color = isSelected
+                                ? switch (type) {
+                                    'music' => Colors.pinkAccent,
+                                    'movies' => Colors.blueAccent,
+                                    'tvshows' ||
+                                    'tv' ||
+                                    'series' => Colors.purpleAccent,
+                                    'photos' => Colors.greenAccent,
+                                    'books' => Colors.orangeAccent,
+                                    _ => Colors.grey,
+                                  }
+                                : Colors.grey.shade500;
+
+                            return Icon(iconData, color: color);
+                          },
                         ),
-                        label: Text(lib['Name'] ?? 'Unknown'),
+                        label: Builder(
+                          builder: (context) {
+                            final lib = filteredLibs[i];
+                            return Text(lib['Name'] ?? 'Unknown');
+                          },
+                        ),
                       ),
                   ],
                   trailing: Expanded(
@@ -339,7 +410,7 @@ class _HomePageState extends State<HomePage> {
                                           .toString();
                                       final heroLogo = Image.network(
                                         '${widget.server}/Items/${item['Id']}/Images/Logo',
-                                        height: 64,
+                                        height: 100,
                                         fit: BoxFit.contain,
                                         errorBuilder:
                                             (context, error, stackTrace) {
@@ -722,9 +793,12 @@ class _HomePageState extends State<HomePage> {
                                                 ),
                                                 label: const Text('More'),
                                                 onPressed: () {
-                                                  final idx = libs.indexWhere(
-                                                    (l) => l['Id'] == lib['Id'],
-                                                  );
+                                                  final idx = filteredLibs
+                                                      .indexWhere(
+                                                        (l) =>
+                                                            l['Id'] ==
+                                                            lib['Id'],
+                                                      );
                                                   if (idx != -1) {
                                                     setState(() {
                                                       selectedIndex = idx + 1;
@@ -857,9 +931,12 @@ class _HomePageState extends State<HomePage> {
                                                 ),
                                                 label: const Text('More'),
                                                 onPressed: () {
-                                                  final idx = libs.indexWhere(
-                                                    (l) => l['Id'] == lib['Id'],
-                                                  );
+                                                  final idx = filteredLibs
+                                                      .indexWhere(
+                                                        (l) =>
+                                                            l['Id'] ==
+                                                            lib['Id'],
+                                                      );
                                                   if (idx != -1) {
                                                     setState(() {
                                                       selectedIndex = idx + 1;
