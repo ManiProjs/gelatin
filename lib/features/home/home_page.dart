@@ -231,6 +231,30 @@ class _HomePageState extends State<HomePage> {
                                       );
                                       final item = items[localIndex];
 
+                                      // HERO UI POLISH
+                                      final productionYear =
+                                          item['ProductionYear']?.toString();
+                                      final mediaType = (item['Type'] ?? '')
+                                          .toString();
+                                      final heroLogo = Image.network(
+                                        '${widget.server}/Items/${item['Id']}/Images/Logo',
+                                        height: 64,
+                                        fit: BoxFit.contain,
+                                        errorBuilder:
+                                            (context, error, stackTrace) {
+                                              return Text(
+                                                item['Name'] ?? '',
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 28,
+                                                  fontWeight: FontWeight.bold,
+                                                  letterSpacing: -0.5,
+                                                ),
+                                                maxLines: 2,
+                                                overflow: TextOverflow.ellipsis,
+                                              );
+                                            },
+                                      );
                                       return Stack(
                                         children: [
                                           GestureDetector(
@@ -251,14 +275,14 @@ class _HomePageState extends State<HomePage> {
                                             child: Container(
                                               height: 420,
                                               margin: const EdgeInsets.only(
-                                                left: 12,
-                                                right: 12,
-                                                top: 12,
-                                                bottom: 16,
+                                                left: 20,
+                                                right: 20,
+                                                top: 16,
+                                                bottom: 24,
                                               ),
                                               decoration: BoxDecoration(
                                                 borderRadius:
-                                                    BorderRadius.circular(16),
+                                                    BorderRadius.circular(20),
                                                 image: DecorationImage(
                                                   image: NetworkImage(
                                                     '${widget.server}/Items/${item['Id']}/Images/Backdrop',
@@ -269,7 +293,7 @@ class _HomePageState extends State<HomePage> {
                                               child: Container(
                                                 decoration: BoxDecoration(
                                                   borderRadius:
-                                                      BorderRadius.circular(16),
+                                                      BorderRadius.circular(20),
                                                   gradient:
                                                       const LinearGradient(
                                                         begin: Alignment
@@ -284,41 +308,204 @@ class _HomePageState extends State<HomePage> {
                                                 ),
                                                 alignment: Alignment.bottomLeft,
                                                 padding: const EdgeInsets.all(
-                                                  16,
+                                                  20,
                                                 ),
-                                                child: Align(
-                                                  alignment:
-                                                      Alignment.bottomLeft,
-                                                  child: Padding(
-                                                    padding:
-                                                        const EdgeInsets.only(
-                                                          bottom: 8,
-                                                        ),
-                                                    child: Image.network(
-                                                      '${widget.server}/Items/${item['Id']}/Images/Logo',
-                                                      height: 110,
-                                                      fit: BoxFit.contain,
-                                                      errorBuilder:
-                                                          (
-                                                            context,
-                                                            error,
-                                                            stackTrace,
-                                                          ) {
-                                                            return Text(
-                                                              item['Name'] ??
-                                                                  '',
-                                                              style: const TextStyle(
-                                                                color: Colors
-                                                                    .white,
-                                                                fontSize: 22,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold,
+                                                child: Row(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.end,
+                                                  children: [
+                                                    // Left: Logo/title, metadata, play button
+                                                    Expanded(
+                                                      child: Column(
+                                                        mainAxisSize:
+                                                            MainAxisSize.min,
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .start,
+                                                        children: [
+                                                          heroLogo,
+                                                          if (productionYear !=
+                                                                  null ||
+                                                              mediaType
+                                                                  .isNotEmpty)
+                                                            Padding(
+                                                              padding:
+                                                                  const EdgeInsets.only(
+                                                                    top: 8.0,
+                                                                    bottom: 2.0,
+                                                                  ),
+                                                              child: Row(
+                                                                mainAxisSize:
+                                                                    MainAxisSize
+                                                                        .min,
+                                                                children: [
+                                                                  if (productionYear !=
+                                                                      null)
+                                                                    Text(
+                                                                      productionYear,
+                                                                      style: const TextStyle(
+                                                                        color: Colors
+                                                                            .white70,
+                                                                        fontSize:
+                                                                            14,
+                                                                        fontWeight:
+                                                                            FontWeight.w500,
+                                                                      ),
+                                                                    ),
+                                                                  if (productionYear !=
+                                                                          null &&
+                                                                      mediaType
+                                                                          .isNotEmpty)
+                                                                    const Padding(
+                                                                      padding: EdgeInsets.symmetric(
+                                                                        horizontal:
+                                                                            6,
+                                                                      ),
+                                                                      child: Text(
+                                                                        '·',
+                                                                        style: TextStyle(
+                                                                          color:
+                                                                              Colors.white54,
+                                                                          fontSize:
+                                                                              16,
+                                                                        ),
+                                                                      ),
+                                                                    ),
+                                                                  if (mediaType
+                                                                      .isNotEmpty)
+                                                                    Text(
+                                                                      mediaType,
+                                                                      style: const TextStyle(
+                                                                        color: Colors
+                                                                            .white70,
+                                                                        fontSize:
+                                                                            14,
+                                                                        fontWeight:
+                                                                            FontWeight.w500,
+                                                                      ),
+                                                                    ),
+                                                                ],
                                                               ),
-                                                            );
-                                                          },
+                                                            ),
+                                                          Padding(
+                                                            padding:
+                                                                const EdgeInsets.only(
+                                                                  top: 10.0,
+                                                                ),
+                                                            child: FilledButton.icon(
+                                                              style: FilledButton.styleFrom(
+                                                                backgroundColor:
+                                                                    Colors
+                                                                        .white,
+                                                                foregroundColor:
+                                                                    Colors
+                                                                        .black,
+                                                                padding:
+                                                                    const EdgeInsets.symmetric(
+                                                                      horizontal:
+                                                                          22,
+                                                                      vertical:
+                                                                          10,
+                                                                    ),
+                                                                shape: RoundedRectangleBorder(
+                                                                  borderRadius:
+                                                                      BorderRadius.circular(
+                                                                        22,
+                                                                      ),
+                                                                ),
+                                                                textStyle: const TextStyle(
+                                                                  fontSize: 16,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w600,
+                                                                ),
+                                                              ),
+                                                              icon: const Icon(
+                                                                Icons
+                                                                    .play_arrow_rounded,
+                                                                size: 26,
+                                                              ),
+                                                              label: const Text(
+                                                                'Play',
+                                                              ),
+                                                              onPressed: () {
+                                                                Navigator.push(
+                                                                  context,
+                                                                  MaterialPageRoute(
+                                                                    builder: (_) => ItemDetailPage(
+                                                                      server: widget
+                                                                          .server,
+                                                                      token: widget
+                                                                          .token,
+                                                                      item:
+                                                                          item,
+                                                                      playback:
+                                                                          playback,
+                                                                    ),
+                                                                  ),
+                                                                );
+                                                              },
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
                                                     ),
-                                                  ),
+                                                    // Right: Large poster image
+                                                    Padding(
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                            left: 16,
+                                                            bottom: 4,
+                                                            right: 2,
+                                                          ),
+                                                      child: Container(
+                                                        width: 170,
+                                                        height: 255,
+                                                        decoration: BoxDecoration(
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                18,
+                                                              ),
+                                                          boxShadow: [
+                                                            BoxShadow(
+                                                              color: Colors
+                                                                  .black
+                                                                  .withOpacity(
+                                                                    0.22,
+                                                                  ),
+                                                              blurRadius: 18,
+                                                              offset:
+                                                                  const Offset(
+                                                                    0,
+                                                                    6,
+                                                                  ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                        clipBehavior:
+                                                            Clip.hardEdge,
+                                                        child: Image.network(
+                                                          '${widget.server}/Items/${item['Id']}/Images/Primary',
+                                                          fit: BoxFit.cover,
+                                                          errorBuilder:
+                                                              (
+                                                                _,
+                                                                __,
+                                                                ___,
+                                                              ) => Container(
+                                                                color: Colors
+                                                                    .grey[800],
+                                                                child: const Icon(
+                                                                  Icons.movie,
+                                                                  color: Colors
+                                                                      .white60,
+                                                                  size: 48,
+                                                                ),
+                                                              ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
                                                 ),
                                               ),
                                             ),
@@ -395,10 +582,10 @@ class _HomePageState extends State<HomePage> {
                                         .toList();
                                     return Padding(
                                       padding: const EdgeInsets.only(
-                                        left: 12,
-                                        right: 12,
-                                        bottom: 24,
-                                        top: 12,
+                                        left: 20,
+                                        right: 20,
+                                        bottom: 36,
+                                        top: 16,
                                       ),
                                       child: Column(
                                         crossAxisAlignment:
@@ -409,13 +596,30 @@ class _HomePageState extends State<HomePage> {
                                               Text(
                                                 lib['Name'] ?? 'Movies',
                                                 style: const TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 20,
+                                                  fontWeight: FontWeight.w700,
+                                                  fontSize: 24,
                                                 ),
                                               ),
                                               const Spacer(),
-                                              TextButton(
-                                                child: const Text('More...'),
+                                              OutlinedButton.icon(
+                                                style: OutlinedButton.styleFrom(
+                                                  shape: const StadiumBorder(),
+                                                  side: BorderSide(
+                                                    color: Theme.of(
+                                                      context,
+                                                    ).colorScheme.outline,
+                                                  ),
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 16,
+                                                        vertical: 4,
+                                                      ),
+                                                ),
+                                                icon: const Icon(
+                                                  Icons.arrow_forward,
+                                                  size: 20,
+                                                ),
+                                                label: const Text('More'),
                                                 onPressed: () {
                                                   final idx = libs.indexWhere(
                                                     (l) => l['Id'] == lib['Id'],
@@ -431,9 +635,9 @@ class _HomePageState extends State<HomePage> {
                                               ),
                                             ],
                                           ),
-                                          const SizedBox(height: 12),
+                                          const SizedBox(height: 16),
                                           SizedBox(
-                                            height: 250,
+                                            height: 290,
                                             child: ListView.builder(
                                               scrollDirection: Axis.horizontal,
                                               itemCount: visibleItems.length,
@@ -459,18 +663,26 @@ class _HomePageState extends State<HomePage> {
                                                       ),
                                                     );
                                                   },
-                                                  child: Container(
-                                                    width: 150,
-                                                    margin: EdgeInsets.only(
-                                                      right: 12,
-                                                    ),
-                                                    child: PosterCard(
-                                                      title: item['Name'] ?? '',
-                                                      imageUrl: imageUrl,
-                                                      headers: {
-                                                        'X-Emby-Token':
-                                                            widget.token,
-                                                      },
+                                                  child: Padding(
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          vertical: 4.0,
+                                                        ),
+                                                    child: Container(
+                                                      width: 170,
+                                                      margin:
+                                                          const EdgeInsets.only(
+                                                            right: 14,
+                                                          ),
+                                                      child: PosterCard(
+                                                        title:
+                                                            item['Name'] ?? '',
+                                                        imageUrl: imageUrl,
+                                                        headers: {
+                                                          'X-Emby-Token':
+                                                              widget.token,
+                                                        },
+                                                      ),
                                                     ),
                                                   ),
                                                 );
@@ -505,10 +717,10 @@ class _HomePageState extends State<HomePage> {
                                         .toList();
                                     return Padding(
                                       padding: const EdgeInsets.only(
-                                        left: 12,
-                                        right: 12,
-                                        bottom: 24,
-                                        top: 12,
+                                        left: 20,
+                                        right: 20,
+                                        bottom: 36,
+                                        top: 16,
                                       ),
                                       child: Column(
                                         crossAxisAlignment:
@@ -519,13 +731,30 @@ class _HomePageState extends State<HomePage> {
                                               Text(
                                                 lib['Name'] ?? 'Music',
                                                 style: const TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 20,
+                                                  fontWeight: FontWeight.w700,
+                                                  fontSize: 24,
                                                 ),
                                               ),
                                               const Spacer(),
-                                              TextButton(
-                                                child: const Text('More...'),
+                                              OutlinedButton.icon(
+                                                style: OutlinedButton.styleFrom(
+                                                  shape: const StadiumBorder(),
+                                                  side: BorderSide(
+                                                    color: Theme.of(
+                                                      context,
+                                                    ).colorScheme.outline,
+                                                  ),
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 16,
+                                                        vertical: 4,
+                                                      ),
+                                                ),
+                                                icon: const Icon(
+                                                  Icons.arrow_forward,
+                                                  size: 20,
+                                                ),
+                                                label: const Text('More'),
                                                 onPressed: () {
                                                   final idx = libs.indexWhere(
                                                     (l) => l['Id'] == lib['Id'],
@@ -541,9 +770,9 @@ class _HomePageState extends State<HomePage> {
                                               ),
                                             ],
                                           ),
-                                          const SizedBox(height: 12),
+                                          const SizedBox(height: 16),
                                           SizedBox(
-                                            height: 110,
+                                            height: 120,
                                             child: ListView.builder(
                                               scrollDirection: Axis.horizontal,
                                               itemCount: visibleItems.length,
@@ -551,18 +780,19 @@ class _HomePageState extends State<HomePage> {
                                                 final item = visibleItems[i];
                                                 return Container(
                                                   width: 260,
-                                                  margin: EdgeInsets.only(
-                                                    right: 12,
+                                                  margin: const EdgeInsets.only(
+                                                    right: 14,
                                                   ),
                                                   padding: const EdgeInsets.all(
-                                                    10,
+                                                    12,
                                                   ),
                                                   decoration: BoxDecoration(
-                                                    color: Colors.black
-                                                        .withAlpha(13),
+                                                    color: Theme.of(context)
+                                                        .colorScheme
+                                                        .surfaceContainerHighest,
                                                     borderRadius:
                                                         BorderRadius.circular(
-                                                          12,
+                                                          14,
                                                         ),
                                                   ),
                                                   child: Row(
@@ -574,8 +804,8 @@ class _HomePageState extends State<HomePage> {
                                                             ),
                                                         child: Image.network(
                                                           '${widget.server}/Items/${item['Id']}/Images/Primary',
-                                                          width: 56,
-                                                          height: 56,
+                                                          width: 64,
+                                                          height: 64,
                                                           fit: BoxFit.cover,
                                                           errorBuilder:
                                                               (
@@ -585,11 +815,13 @@ class _HomePageState extends State<HomePage> {
                                                               ) => const Icon(
                                                                 Icons
                                                                     .music_note,
-                                                                size: 30,
+                                                                size: 36,
+                                                                color: Colors
+                                                                    .white54,
                                                               ),
                                                         ),
                                                       ),
-                                                      const SizedBox(width: 12),
+                                                      const SizedBox(width: 16),
                                                       Expanded(
                                                         child: Column(
                                                           crossAxisAlignment:
@@ -610,7 +842,7 @@ class _HomePageState extends State<HomePage> {
                                                                 fontWeight:
                                                                     FontWeight
                                                                         .w600,
-                                                                fontSize: 14,
+                                                                fontSize: 16,
                                                               ),
                                                             ),
                                                             const SizedBox(
@@ -627,7 +859,7 @@ class _HomePageState extends State<HomePage> {
                                                               style:
                                                                   const TextStyle(
                                                                     fontSize:
-                                                                        12,
+                                                                        13,
                                                                     color: Colors
                                                                         .grey,
                                                                   ),
@@ -635,9 +867,38 @@ class _HomePageState extends State<HomePage> {
                                                           ],
                                                         ),
                                                       ),
-                                                      const Icon(
-                                                        Icons.play_arrow,
-                                                        color: Colors.white70,
+                                                      Padding(
+                                                        padding:
+                                                            const EdgeInsets.only(
+                                                              left: 8.0,
+                                                            ),
+                                                        child: Material(
+                                                          color: Theme.of(
+                                                            context,
+                                                          ).colorScheme.primary,
+                                                          shape:
+                                                              const CircleBorder(),
+                                                          child: InkWell(
+                                                            customBorder:
+                                                                const CircleBorder(),
+                                                            onTap: () {
+                                                              // Play action (kept as before)
+                                                            },
+                                                            child: const Padding(
+                                                              padding:
+                                                                  EdgeInsets.all(
+                                                                    6.0,
+                                                                  ),
+                                                              child: Icon(
+                                                                Icons
+                                                                    .play_arrow_rounded,
+                                                                size: 28,
+                                                                color: Colors
+                                                                    .white,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ),
                                                       ),
                                                     ],
                                                   ),
@@ -683,12 +944,11 @@ class _HomePageState extends State<HomePage> {
                                       lib['CollectionType'] == 'music';
 
                                   return Padding(
-                                    padding: const EdgeInsets.all(12),
+                                    padding: const EdgeInsets.all(20),
                                     child: Column(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                        // Folder title and SizedBox removed for cleaner UI
                                         if (isMusic)
                                           Column(
                                             children: List.generate(items.length, (
@@ -697,16 +957,17 @@ class _HomePageState extends State<HomePage> {
                                               final item = items[i];
                                               return Container(
                                                 margin: const EdgeInsets.only(
-                                                  bottom: 12,
+                                                  bottom: 14,
                                                 ),
                                                 padding: const EdgeInsets.all(
-                                                  10,
+                                                  12,
                                                 ),
                                                 decoration: BoxDecoration(
-                                                  color: Colors.black
-                                                      .withValues(alpha: 0.05),
+                                                  color: Theme.of(context)
+                                                      .colorScheme
+                                                      .surfaceContainerHighest,
                                                   borderRadius:
-                                                      BorderRadius.circular(12),
+                                                      BorderRadius.circular(14),
                                                 ),
                                                 child: Row(
                                                   children: [
@@ -717,21 +978,23 @@ class _HomePageState extends State<HomePage> {
                                                           ),
                                                       child: Image.network(
                                                         '${widget.server}/Items/${item['Id']}/Images/Primary',
-                                                        width: 56,
-                                                        height: 56,
+                                                        width: 64,
+                                                        height: 64,
                                                         fit: BoxFit.cover,
                                                         errorBuilder:
                                                             (
                                                               _,
-                                                              _,
-                                                              _,
+                                                              __,
+                                                              ___,
                                                             ) => const Icon(
                                                               Icons.music_note,
-                                                              size: 30,
+                                                              size: 36,
+                                                              color: Colors
+                                                                  .white54,
                                                             ),
                                                       ),
                                                     ),
-                                                    const SizedBox(width: 12),
+                                                    const SizedBox(width: 16),
                                                     Expanded(
                                                       child: Column(
                                                         crossAxisAlignment:
@@ -745,7 +1008,7 @@ class _HomePageState extends State<HomePage> {
                                                                   fontWeight:
                                                                       FontWeight
                                                                           .w600,
-                                                                  fontSize: 14,
+                                                                  fontSize: 16,
                                                                 ),
                                                             maxLines: 1,
                                                             overflow:
@@ -761,7 +1024,7 @@ class _HomePageState extends State<HomePage> {
                                                                 '',
                                                             style:
                                                                 const TextStyle(
-                                                                  fontSize: 12,
+                                                                  fontSize: 13,
                                                                   color: Colors
                                                                       .grey,
                                                                 ),
@@ -773,9 +1036,38 @@ class _HomePageState extends State<HomePage> {
                                                         ],
                                                       ),
                                                     ),
-                                                    const Icon(
-                                                      Icons.play_arrow,
-                                                      color: Colors.white70,
+                                                    Padding(
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                            left: 8.0,
+                                                          ),
+                                                      child: Material(
+                                                        color: Theme.of(
+                                                          context,
+                                                        ).colorScheme.primary,
+                                                        shape:
+                                                            const CircleBorder(),
+                                                        child: InkWell(
+                                                          customBorder:
+                                                              const CircleBorder(),
+                                                          onTap: () {
+                                                            // Play action (kept as before)
+                                                          },
+                                                          child: const Padding(
+                                                            padding:
+                                                                EdgeInsets.all(
+                                                                  6.0,
+                                                                ),
+                                                            child: Icon(
+                                                              Icons
+                                                                  .play_arrow_rounded,
+                                                              size: 28,
+                                                              color:
+                                                                  Colors.white,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
                                                     ),
                                                   ],
                                                 ),
@@ -799,7 +1091,6 @@ class _HomePageState extends State<HomePage> {
                                               final item = items[i];
                                               final imageUrl =
                                                   '${widget.server}/Items/${item['Id']}/Images/Primary';
-
                                               return GestureDetector(
                                                 onTap: () async {
                                                   Navigator.push(
