@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:gelatin/core/playback/playback_controller.dart';
+import 'package:gelatin/core/playback/playback_service.dart';
+import 'package:gelatin/features/player/player_page.dart';
 
 class ItemDetailPage extends StatelessWidget {
   final String server;
   final String token;
   final Map<String, dynamic> item;
+  final PlaybackService playback;
 
   const ItemDetailPage({
     super.key,
     required this.server,
     required this.token,
     required this.item,
+    required this.playback,
   });
 
   @override
@@ -20,83 +25,163 @@ class ItemDetailPage extends StatelessWidget {
 
     final posterUrl = '$server/Items/$id/Images/Primary';
 
+    final logoUrl = '$server/Items/$id/Images/Logo';
+
     return Scaffold(
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
-            expandedHeight: 300,
+            expandedHeight: 420,
             pinned: true,
             backgroundColor: Colors.black,
             flexibleSpace: FlexibleSpaceBar(
-              background: Image.network(
-                backdropUrl,
-                headers: {'X-Emby-Token': token},
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(color: Colors.black),
+              background: Stack(
+                fit: StackFit.expand,
+                children: [
+                  // Backdrop image
+                  Image.network(
+                    backdropUrl,
+                    headers: {'X-Emby-Token': token},
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, _, _) => Container(color: Colors.black),
+                  ),
+                  // Bottom gradient overlay
+                  Container(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Colors.transparent, Colors.black87],
+                        stops: [0.55, 1.0],
+                      ),
+                    ),
+                  ),
+                  // Positioned content overlaid on backdrop
+                  Positioned(
+                    left: 20,
+                    right: 20,
+                    bottom: 24,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        // Poster image
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.network(
+                            posterUrl,
+                            headers: {'X-Emby-Token': token},
+                            width: 160,
+                            height: 240,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, _, __) =>
+                                const Icon(Icons.movie, size: 80),
+                          ),
+                        ),
+                        const SizedBox(width: 24),
+                        // Right column
+                        Expanded(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Logo or title
+                              Image.network(
+                                logoUrl,
+                                headers: {'X-Emby-Token': token},
+                                height: 72,
+                                errorBuilder: (_, __, ___) => Text(
+                                  item['Name'] ?? 'Unknown',
+                                  style: const TextStyle(
+                                    fontSize: 32,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              // Chips for year and runtime
+                              Wrap(
+                                spacing: 8,
+                                children: [
+                                  if (item['ProductionYear'] != null)
+                                    Chip(
+                                      label: Text(
+                                        '${item['ProductionYear']}',
+                                        style: const TextStyle(fontSize: 13),
+                                      ),
+                                      visualDensity: VisualDensity.compact,
+                                      materialTapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
+                                      backgroundColor: Colors.grey[800],
+                                      labelStyle: const TextStyle(
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  if (item['RunTimeTicks'] != null)
+                                    Chip(
+                                      label: Text(
+                                        '${((item['RunTimeTicks'] as int) ~/ 600000000)} min',
+                                        style: const TextStyle(fontSize: 13),
+                                      ),
+                                      visualDensity: VisualDensity.compact,
+                                      materialTapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
+                                      backgroundColor: Colors.grey[800],
+                                      labelStyle: const TextStyle(
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              const SizedBox(height: 20),
+                              SizedBox(
+                                width: 220,
+                                child: ElevatedButton.icon(
+                                  onPressed: () async {
+                                    final controller = PlaybackController(
+                                      playback,
+                                    );
+                                    final streamUrl = await controller.resolve(
+                                      item['Id'],
+                                    );
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => PlayerPage(
+                                          url: streamUrl,
+                                          title: item['Name'] ?? '',
+                                          headers: {'X-Emby-Token': token},
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  icon: const Icon(Icons.play_arrow),
+                                  label: const Text("Play"),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
-
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.network(
-                          posterUrl,
-                          headers: {'X-Emby-Token': token},
-                          width: 120,
-                          height: 180,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) =>
-                              const Icon(Icons.movie, size: 80),
-                        ),
-                      ),
-
-                      const SizedBox(width: 16),
-
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              item['Name'] ?? 'Unknown',
-                              style: const TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-
-                            const SizedBox(height: 8),
-
-                            Text(
-                              item['ProductionYear']?.toString() ?? '',
-                              style: const TextStyle(color: Colors.grey),
-                            ),
-
-                            const SizedBox(height: 16),
-
-                            ElevatedButton.icon(
-                              onPressed: () {
-                                // later: playback
-                              },
-                              icon: const Icon(Icons.play_arrow),
-                              label: const Text("Play"),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                  const Divider(),
+                  const SizedBox(height: 12),
+                  const Text(
+                    "Overview",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
-
-                  const SizedBox(height: 20),
-
+                  const SizedBox(height: 8),
                   Text(
                     item['Overview'] ?? 'No description available.',
                     style: const TextStyle(fontSize: 14),

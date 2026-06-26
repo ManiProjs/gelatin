@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:gelatin/core/playback/playback_controller.dart';
 import 'package:gelatin/core/playback/playback_service.dart';
 import 'package:gelatin/core/storage/auth_storage.dart';
 import 'package:gelatin/features/auth/login_page.dart';
+import 'package:gelatin/features/details/item_detail_page.dart';
 import 'package:gelatin/features/home/widgets/poster_card.dart';
-import 'package:gelatin/features/player/player_page.dart';
 import '../../core/api/jellyfin_api.dart';
 
 class HomePage extends StatefulWidget {
@@ -448,8 +447,8 @@ class _HomePageState extends State<HomePage> {
                                             ),
                                             padding: const EdgeInsets.all(10),
                                             decoration: BoxDecoration(
-                                              color: Colors.black.withOpacity(
-                                                0.05,
+                                              color: Colors.black.withValues(
+                                                alpha: 0.05,
                                               ),
                                               borderRadius:
                                                   BorderRadius.circular(12),
@@ -464,12 +463,11 @@ class _HomePageState extends State<HomePage> {
                                                     width: 56,
                                                     height: 56,
                                                     fit: BoxFit.cover,
-                                                    errorBuilder:
-                                                        (_, __, ___) =>
-                                                            const Icon(
-                                                              Icons.music_note,
-                                                              size: 30,
-                                                            ),
+                                                    errorBuilder: (_, _, _) =>
+                                                        const Icon(
+                                                          Icons.music_note,
+                                                          size: 30,
+                                                        ),
                                                   ),
                                                 ),
                                                 const SizedBox(width: 12),
@@ -572,7 +570,7 @@ class _HomePageState extends State<HomePage> {
                                                 ),
                                                 decoration: BoxDecoration(
                                                   color: Colors.black
-                                                      .withOpacity(0.05),
+                                                      .withValues(alpha: 0.05),
                                                   borderRadius:
                                                       BorderRadius.circular(12),
                                                 ),
@@ -591,8 +589,8 @@ class _HomePageState extends State<HomePage> {
                                                         errorBuilder:
                                                             (
                                                               _,
-                                                              __,
-                                                              ___,
+                                                              _,
+                                                              _,
                                                             ) => const Icon(
                                                               Icons.music_note,
                                                               size: 30,
@@ -670,29 +668,16 @@ class _HomePageState extends State<HomePage> {
 
                                               return GestureDetector(
                                                 onTap: () async {
-                                                  final controller =
-                                                      PlaybackController(
-                                                        playback,
-                                                      );
-
-                                                  final streamUrl =
-                                                      await controller.resolve(
-                                                        item['Id'],
-                                                      );
-
                                                   Navigator.push(
                                                     context,
                                                     MaterialPageRoute(
                                                       builder: (_) =>
-                                                          PlayerPage(
-                                                            url: streamUrl,
-                                                            title:
-                                                                item['Name'] ??
-                                                                '',
-                                                            headers: {
-                                                              'X-Emby-Token':
-                                                                  widget.token,
-                                                            },
+                                                          ItemDetailPage(
+                                                            server:
+                                                                widget.server,
+                                                            token: widget.token,
+                                                            item: item,
+                                                            playback: playback,
                                                           ),
                                                     ),
                                                   );

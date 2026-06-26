@@ -23,7 +23,7 @@ class PosterCard extends StatelessWidget {
             imageUrl,
             headers: headers,
             fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => const Icon(Icons.movie, size: 40),
+            errorBuilder: (_, _, _) => const Icon(Icons.movie, size: 40),
           ),
 
           // optional gradient overlay for “Netflix feel”
