@@ -27,11 +27,25 @@ jobs:
       - name: Build Windows
         run: flutter build windows --release
 
-      - name: Upload Windows artifact
+      - name: Install Inno Setup
+        run: choco install innosetup -y
+
+      - name: Build installer
+        run: >
+          iscc installer\installer.iss
+          /DMyAppVersion=${{ github.ref_name }}
+
+      - name: Upload installer
         uses: actions/upload-artifact@v4
         with:
-          name: windows-build
-          path: build/windows/x64/runner/Release/**
+          name: gelatin-windows-installer
+          path: dist/*.exe
+
+      - name: Upload portable build
+        uses: actions/upload-artifact@v4
+        with:
+          name: gelatin-windows-portable
+          path: build/windows/x64/runner/Release/
 
   build-linux:
     name: Linux
@@ -59,7 +73,8 @@ jobs:
             ninja-build \
             pkg-config \
             libgtk-3-dev \
-            libsecret-1-dev
+            libsecret-1-dev \
+            libmpv-dev
 
       - name: Install dependencies
         run: flutter pub get
