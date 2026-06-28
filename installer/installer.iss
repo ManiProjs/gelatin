@@ -2,12 +2,7 @@
 #define MyAppPublisher "Mani Arasteh"
 #define MyAppURL "https://github.com/ManiProjs/gelatin"
 #define MyAppExeName "gelatin.exe"
-
-; Override this from the command line:
-; iscc /DMyAppVersion=1.0.0 installer.iss
-#ifndef MyAppVersion
-  #define MyAppVersion "0.1.0"
-#endif
+#define MyAppVersion "0.1.0"
 
 [Setup]
 AppId={{E8A51C3F-DFD2-4F74-9A72-FA7D9B36F9B8}
