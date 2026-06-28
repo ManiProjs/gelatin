@@ -34,8 +34,6 @@ ChangesAssociations=no
 
 UninstallDisplayIcon={app}\{#MyAppExeName}
 
-SetupIconFile=windows\runner\resources\app_icon.ico
-
 VersionInfoVersion={#MyAppVersion}
 VersionInfoProductName={#MyAppName}
 VersionInfoDescription={#MyAppName} Installer
