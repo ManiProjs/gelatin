@@ -1,87 +1,104 @@
-name: Build Flutter Desktop Apps
+name: Build Gelatin
 
 on:
   workflow_dispatch:
 
 jobs:
-  build-windows:
+  windows:
+    name: Windows
     runs-on: windows-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
+          cache: true
 
-      - name: Enable Windows
+      - name: Enable Windows desktop
         run: flutter config --enable-windows-desktop
 
       - name: Install dependencies
         run: flutter pub get
 
       - name: Build Windows
-        run: flutter build windows
+        run: flutter build windows --release
 
-      - name: Upload artifact
+      - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
         with:
           name: windows-build
-          path: build\windows\runner\Release\**
+          path: build/windows/x64/runner/Release/**
 
   build-linux:
+    name: Linux
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
+          cache: true
 
-      - name: Install Linux deps
+      - name: Enable Linux desktop
+        run: flutter config --enable-linux-desktop
+
+      - name: Install Linux dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev libsecret-1-0
+          sudo apt-get install -y \
+            clang \
+            cmake \
+            ninja-build \
+            pkg-config \
+            libgtk-3-dev \
+            libsecret-1-dev
 
       - name: Install dependencies
         run: flutter pub get
 
       - name: Build Linux
-        run: flutter build linux
+        run: flutter build linux --release
 
-      - name: Upload artifact
+      - name: Upload Linux artifact
         uses: actions/upload-artifact@v4
         with:
           name: linux-build
           path: build/linux/x64/release/bundle/
 
   build-macos:
+    name: macOS
     runs-on: macos-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
+          cache: true
+
+      - name: Enable macOS desktop
+        run: flutter config --enable-macos-desktop
 
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Enable macOS
-        run: flutter config --enable-macos-desktop
-
+      # Requires code signing to be disabled in the Xcode project
+      # (CODE_SIGNING_ALLOWED = NO for Release)
       - name: Build macOS
-        run: flutter build macos
+        run: flutter build macos --release
 
-      - name: Upload artifact
+      - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
         with:
           name: macos-build
