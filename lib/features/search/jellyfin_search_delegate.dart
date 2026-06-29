@@ -82,7 +82,7 @@ class JellyfinSearchDelegate extends SearchDelegate<dynamic> {
                       height: height,
                       fit: BoxFit.cover,
                       headers: {'X-Emby-Token': token},
-                      errorBuilder: (_, __, ___) => SizedBox(
+                      errorBuilder: (_, _, _) => SizedBox(
                         width: width,
                         height: height,
                         child: const Icon(Icons.movie),
@@ -164,7 +164,7 @@ class JellyfinSearchDelegate extends SearchDelegate<dynamic> {
                       height: height,
                       fit: BoxFit.cover,
                       headers: {'X-Emby-Token': token},
-                      errorBuilder: (_, __, ___) => SizedBox(
+                      errorBuilder: (_, _, _) => SizedBox(
                         width: width,
                         height: height,
                         child: const Icon(Icons.movie),

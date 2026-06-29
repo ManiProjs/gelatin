@@ -73,7 +73,7 @@ class ItemDetailPage extends StatelessWidget {
                             width: 160,
                             height: 240,
                             fit: BoxFit.cover,
-                            errorBuilder: (_, _, __) =>
+                            errorBuilder: (_, _, _) =>
                                 const Icon(Icons.movie, size: 80),
                           ),
                         ),
@@ -89,7 +89,7 @@ class ItemDetailPage extends StatelessWidget {
                                 logoUrl,
                                 headers: {'X-Emby-Token': token},
                                 height: 72,
-                                errorBuilder: (_, __, ___) => Text(
+                                errorBuilder: (_, _, _) => Text(
                                   item['Name'] ?? 'Unknown',
                                   style: const TextStyle(
                                     fontSize: 32,

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  static const _accent = Color(0xFF7C4DFF);
+  static const _accent = Color(0xFF2196F3);
 
   static final ThemeData light = ThemeData(
     useMaterial3: true,
@@ -39,7 +39,7 @@ class AppTheme {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     ),
     dividerTheme: DividerThemeData(
-      color: Colors.black.withOpacity(0.12),
+      color: Colors.black.withValues(alpha: 0.12),
       thickness: 1,
       space: 1,
     ),
@@ -99,7 +99,7 @@ class AppTheme {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     ),
     dividerTheme: DividerThemeData(
-      color: Colors.white.withOpacity(0.12),
+      color: Colors.white.withValues(alpha: 0.12),
       thickness: 1,
       space: 1,
     ),
