@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:gelatin/core/playback/playback_service.dart';
 import 'package:gelatin/core/storage/auth_storage.dart';
@@ -35,6 +36,23 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  Timer? _heroTimer;
+
+  void _startHeroTimer(
+    List<dynamic> items,
+    void Function(VoidCallback) setHeroState,
+  ) {
+    _heroTimer?.cancel();
+    if (items.isEmpty) return;
+
+    _heroTimer = Timer.periodic(const Duration(seconds: 12), (_) {
+      if (!mounted) return;
+      setHeroState(() {
+        heroIndex = (heroIndex + 1) % items.length;
+      });
+    });
+  }
+
   // --- HERO CHIP HELPER ---
   Widget _heroChip(String label, {IconData? icon}) {
     return Container(
@@ -140,6 +158,12 @@ class _HomePageState extends State<HomePage> {
         title: title,
       );
     }).toList();
+  }
+
+  @override
+  void dispose() {
+    _heroTimer?.cancel();
+    super.dispose();
   }
 
   @override
@@ -545,6 +569,16 @@ class _HomePageState extends State<HomePage> {
                                           items.length - 1,
                                         );
                                         final item = items[localIndex];
+
+                                        WidgetsBinding.instance
+                                            .addPostFrameCallback((_) {
+                                              if (mounted) {
+                                                _startHeroTimer(
+                                                  items,
+                                                  setHeroState,
+                                                );
+                                              }
+                                            });
 
                                         // HERO UI POLISH
                                         final productionYear =
