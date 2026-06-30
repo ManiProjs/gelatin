@@ -666,7 +666,7 @@ class ItemDetailPage extends StatelessWidget {
                                               posterUrl,
                                               headers: {'X-Emby-Token': token},
                                               fit: BoxFit.cover,
-                                              errorBuilder: (_, __, ___) =>
+                                              errorBuilder: (_, _, _) =>
                                                   Container(
                                                     color: Colors.grey[900],
                                                     child: const Icon(

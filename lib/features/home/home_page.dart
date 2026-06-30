@@ -719,16 +719,18 @@ class _HomePageState extends State<HomePage> {
                                                                         )
                                                                         .colorScheme
                                                                         .surface
-                                                                        .withOpacity(
-                                                                          0.85,
+                                                                        .withValues(
+                                                                          alpha:
+                                                                              0.85,
                                                                         ),
                                                                     Theme.of(
                                                                           context,
                                                                         )
                                                                         .colorScheme
                                                                         .surface
-                                                                        .withOpacity(
-                                                                          0.45,
+                                                                        .withValues(
+                                                                          alpha:
+                                                                              0.45,
                                                                         ),
                                                                     Colors
                                                                         .transparent,
@@ -789,32 +791,36 @@ class _HomePageState extends State<HomePage> {
                                                                       )
                                                                       .colorScheme
                                                                       .surface
-                                                                      .withOpacity(
-                                                                        0.90,
+                                                                      .withValues(
+                                                                        alpha:
+                                                                            0.90,
                                                                       ),
                                                                   Theme.of(
                                                                         context,
                                                                       )
                                                                       .colorScheme
                                                                       .surface
-                                                                      .withOpacity(
-                                                                        0.70,
+                                                                      .withValues(
+                                                                        alpha:
+                                                                            0.70,
                                                                       ),
                                                                   Theme.of(
                                                                         context,
                                                                       )
                                                                       .colorScheme
                                                                       .surface
-                                                                      .withOpacity(
-                                                                        0.35,
+                                                                      .withValues(
+                                                                        alpha:
+                                                                            0.35,
                                                                       ),
                                                                   Theme.of(
                                                                         context,
                                                                       )
                                                                       .colorScheme
                                                                       .surface
-                                                                      .withOpacity(
-                                                                        0.10,
+                                                                      .withValues(
+                                                                        alpha:
+                                                                            0.10,
                                                                       ),
                                                                   Colors
                                                                       .transparent,
@@ -1149,8 +1155,8 @@ class _HomePageState extends State<HomePage> {
                                                                       BoxShadow(
                                                                         color: Colors
                                                                             .black
-                                                                            .withOpacity(
-                                                                              0.22,
+                                                                            .withValues(
+                                                                              alpha: 0.22,
                                                                             ),
                                                                         blurRadius:
                                                                             28,
@@ -1168,7 +1174,7 @@ class _HomePageState extends State<HomePage> {
                                                                     '${widget.server}/Items/${item['Id']}/Images/Primary',
                                                                     fit: BoxFit
                                                                         .cover,
-                                                                    errorBuilder: (_, __, ___) => Container(
+                                                                    errorBuilder: (_, _, _) => Container(
                                                                       color: Colors
                                                                           .grey[800],
                                                                       child: const Icon(
@@ -1205,8 +1211,9 @@ class _HomePageState extends State<HomePage> {
                                                     ),
                                                     onPressed: () {
                                                       setHeroState(() {
-                                                        if (items.isEmpty)
+                                                        if (items.isEmpty) {
                                                           return;
+                                                        }
                                                         heroIndex =
                                                             (heroIndex -
                                                                 1 +
@@ -1231,8 +1238,9 @@ class _HomePageState extends State<HomePage> {
                                                     ),
                                                     onPressed: () {
                                                       setHeroState(() {
-                                                        if (items.isEmpty)
+                                                        if (items.isEmpty) {
                                                           return;
+                                                        }
                                                         heroIndex =
                                                             (heroIndex + 1) %
                                                             items.length;
