@@ -555,9 +555,36 @@ class _HomePageState extends State<HomePage> {
                                           '${widget.server}/Items/${item['Id']}/Images/Logo',
                                           height: 100,
                                           fit: BoxFit.contain,
-                                          errorBuilder:
-                                              (context, error, stackTrace) {
-                                                return Text(
+                                          errorBuilder: (context, error, stackTrace) {
+                                            // Fallback: outlined + filled text for hero logo title
+                                            return Stack(
+                                              children: [
+                                                // Outline
+                                                Text(
+                                                  item['Name'] ?? '',
+                                                  maxLines: 2,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  style:
+                                                      TextStyle(
+                                                        fontSize: 34,
+                                                        fontWeight:
+                                                            FontWeight.w800,
+                                                        letterSpacing: -0.5,
+                                                        height: 0.95,
+                                                      ).copyWith(
+                                                        foreground: Paint()
+                                                          ..style =
+                                                              PaintingStyle
+                                                                  .stroke
+                                                          ..strokeWidth = 3
+                                                          ..color = Theme.of(
+                                                            context,
+                                                          ).colorScheme.surface,
+                                                      ),
+                                                ),
+                                                // Fill
+                                                Text(
                                                   item['Name'] ?? '',
                                                   maxLines: 2,
                                                   overflow:
@@ -569,8 +596,10 @@ class _HomePageState extends State<HomePage> {
                                                     color: Colors.white,
                                                     height: 0.95,
                                                   ),
-                                                );
-                                              },
+                                                ),
+                                              ],
+                                            );
+                                          },
                                         );
                                         return AnimatedSwitcher(
                                           duration: const Duration(
@@ -650,25 +679,31 @@ class _HomePageState extends State<HomePage> {
                                                                           context,
                                                                         )
                                                                         .colorScheme
-                                                                        .primary
+                                                                        .surface,
+                                                                    Theme.of(
+                                                                          context,
+                                                                        )
+                                                                        .colorScheme
+                                                                        .surface
                                                                         .withOpacity(
-                                                                          0.55,
+                                                                          0.85,
                                                                         ),
                                                                     Theme.of(
                                                                           context,
                                                                         )
                                                                         .colorScheme
-                                                                        .primary
+                                                                        .surface
                                                                         .withOpacity(
-                                                                          0.25,
+                                                                          0.45,
                                                                         ),
                                                                     Colors
                                                                         .transparent,
                                                                   ],
                                                                   stops: const [
                                                                     0.0,
-                                                                    0.35,
-                                                                    0.75,
+                                                                    0.22,
+                                                                    0.48,
+                                                                    0.82,
                                                                   ],
                                                                 ),
                                                               ),
@@ -708,33 +743,53 @@ class _HomePageState extends State<HomePage> {
                                                         // Cinematic horizontal overlay for readability
                                                         IgnorePointer(
                                                           child: Container(
-                                                            decoration: const BoxDecoration(
+                                                            decoration: BoxDecoration(
                                                               gradient: LinearGradient(
                                                                 begin: Alignment
                                                                     .centerLeft,
                                                                 end: Alignment
                                                                     .centerRight,
                                                                 colors: [
-                                                                  Color(
-                                                                    0xFF000000,
-                                                                  ),
-                                                                  Color(
-                                                                    0xF2000000,
-                                                                  ),
-                                                                  Color(
-                                                                    0xB3000000,
-                                                                  ),
-                                                                  Color(
-                                                                    0x55000000,
-                                                                  ),
+                                                                  Theme.of(
+                                                                        context,
+                                                                      )
+                                                                      .colorScheme
+                                                                      .surface
+                                                                      .withOpacity(
+                                                                        0.90,
+                                                                      ),
+                                                                  Theme.of(
+                                                                        context,
+                                                                      )
+                                                                      .colorScheme
+                                                                      .surface
+                                                                      .withOpacity(
+                                                                        0.70,
+                                                                      ),
+                                                                  Theme.of(
+                                                                        context,
+                                                                      )
+                                                                      .colorScheme
+                                                                      .surface
+                                                                      .withOpacity(
+                                                                        0.35,
+                                                                      ),
+                                                                  Theme.of(
+                                                                        context,
+                                                                      )
+                                                                      .colorScheme
+                                                                      .surface
+                                                                      .withOpacity(
+                                                                        0.10,
+                                                                      ),
                                                                   Colors
                                                                       .transparent,
                                                                 ],
-                                                                stops: [
+                                                                stops: const [
                                                                   0.0,
                                                                   0.18,
-                                                                  0.38,
-                                                                  0.60,
+                                                                  0.40,
+                                                                  0.62,
                                                                   0.82,
                                                                 ],
                                                               ),
@@ -780,17 +835,43 @@ class _HomePageState extends State<HomePage> {
                                                                             error,
                                                                             stackTrace,
                                                                           ) {
-                                                                            return Text(
-                                                                              item['Name'] ??
-                                                                                  '',
-                                                                              style: const TextStyle(
-                                                                                color: Colors.white,
-                                                                                fontSize: 28,
-                                                                                fontWeight: FontWeight.bold,
-                                                                                letterSpacing: -0.5,
-                                                                              ),
-                                                                              maxLines: 2,
-                                                                              overflow: TextOverflow.ellipsis,
+                                                                            // Fallback: outlined + filled text for hero logo title (smaller variant)
+                                                                            return Stack(
+                                                                              children: [
+                                                                                // Outline
+                                                                                Text(
+                                                                                  item['Name'] ??
+                                                                                      '',
+                                                                                  maxLines: 2,
+                                                                                  overflow: TextOverflow.ellipsis,
+                                                                                  style:
+                                                                                      TextStyle(
+                                                                                        fontSize: 28,
+                                                                                        fontWeight: FontWeight.bold,
+                                                                                        letterSpacing: -0.5,
+                                                                                      ).copyWith(
+                                                                                        foreground: Paint()
+                                                                                          ..style = PaintingStyle.stroke
+                                                                                          ..strokeWidth = 3
+                                                                                          ..color = Theme.of(
+                                                                                            context,
+                                                                                          ).colorScheme.surface,
+                                                                                      ),
+                                                                                ),
+                                                                                // Fill
+                                                                                Text(
+                                                                                  item['Name'] ??
+                                                                                      '',
+                                                                                  maxLines: 2,
+                                                                                  overflow: TextOverflow.ellipsis,
+                                                                                  style: const TextStyle(
+                                                                                    color: Colors.white,
+                                                                                    fontSize: 28,
+                                                                                    fontWeight: FontWeight.bold,
+                                                                                    letterSpacing: -0.5,
+                                                                                  ),
+                                                                                ),
+                                                                              ],
                                                                             );
                                                                           },
                                                                     ),
@@ -918,7 +999,7 @@ class _HomePageState extends State<HomePage> {
                                                                             ),
                                                                             icon: const Icon(
                                                                               Icons.play_arrow_rounded,
-                                                                              size: 28,
+                                                                              size: 24,
                                                                             ),
                                                                             label: const Text(
                                                                               'Play Now',
