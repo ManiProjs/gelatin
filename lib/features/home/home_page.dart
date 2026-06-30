@@ -236,11 +236,7 @@ class _HomePageState extends State<HomePage> {
 
           return AnimatedContainer(
             duration: const Duration(milliseconds: 300),
-            color: focusMode
-                ? Theme.of(
-                    context,
-                  ).colorScheme.surfaceContainerHighest.withOpacity(0.6)
-                : Theme.of(context).colorScheme.surface,
+            color: Theme.of(context).colorScheme.surface,
             child: SafeArea(
               child: Row(
                 children: [
@@ -340,6 +336,7 @@ class _HomePageState extends State<HomePage> {
                         child: InkWell(
                           borderRadius: BorderRadius.circular(12),
                           onTap: () {
+                            final pageContext = context;
                             showModalBottomSheet(
                               context: context,
                               builder: (context) {
@@ -359,10 +356,11 @@ class _HomePageState extends State<HomePage> {
                                         const SizedBox(height: 16),
                                         SwitchListTile(
                                           value: focusMode,
-                                          onChanged: (val) {
+                                          onChanged: (value) {
                                             setState(() {
-                                              focusMode = val;
+                                              focusMode = value;
                                             });
+                                            Navigator.of(context).pop();
                                           },
                                           secondary: const Icon(
                                             Icons.center_focus_strong,
@@ -375,8 +373,76 @@ class _HomePageState extends State<HomePage> {
                                             Icons.palette_outlined,
                                           ),
                                           title: const Text('Appearance'),
-                                          onTap: () {
-                                            /* unchanged */
+                                          onTap: () async {
+                                            Navigator.of(context).pop();
+                                            await Future<void>.delayed(
+                                              const Duration(milliseconds: 180),
+                                            );
+                                            if (!pageContext.mounted) return;
+
+                                            await showModalBottomSheet<void>(
+                                              context: pageContext,
+                                              showDragHandle: true,
+                                              builder: (dialogContext) {
+                                                final controller =
+                                                    ThemeControllerScope.of(
+                                                      dialogContext,
+                                                    );
+                                                return SafeArea(
+                                                  child: Column(
+                                                    mainAxisSize:
+                                                        MainAxisSize.min,
+                                                    children: [
+                                                      RadioListTile<ThemeMode>(
+                                                        value: ThemeMode.system,
+                                                        groupValue:
+                                                            controller.mode,
+                                                        onChanged: (_) =>
+                                                            controller
+                                                                .setSystem(),
+                                                        secondary: const Icon(
+                                                          Icons
+                                                              .brightness_auto_outlined,
+                                                        ),
+                                                        title: const Text(
+                                                          'System',
+                                                        ),
+                                                      ),
+                                                      RadioListTile<ThemeMode>(
+                                                        value: ThemeMode.light,
+                                                        groupValue:
+                                                            controller.mode,
+                                                        onChanged: (_) =>
+                                                            controller
+                                                                .setLight(),
+                                                        secondary: const Icon(
+                                                          Icons
+                                                              .light_mode_outlined,
+                                                        ),
+                                                        title: const Text(
+                                                          'Light',
+                                                        ),
+                                                      ),
+                                                      RadioListTile<ThemeMode>(
+                                                        value: ThemeMode.dark,
+                                                        groupValue:
+                                                            controller.mode,
+                                                        onChanged: (_) =>
+                                                            controller
+                                                                .setDark(),
+                                                        secondary: const Icon(
+                                                          Icons
+                                                              .dark_mode_outlined,
+                                                        ),
+                                                        title: const Text(
+                                                          'Dark',
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                );
+                                              },
+                                            );
                                           },
                                         ),
                                         const Divider(),
@@ -493,471 +559,575 @@ class _HomePageState extends State<HomePage> {
                                               (context, error, stackTrace) {
                                                 return Text(
                                                   item['Name'] ?? '',
-                                                  style: const TextStyle(
-                                                    color: Colors.white,
-                                                    fontSize: 28,
-                                                    fontWeight: FontWeight.bold,
-                                                    letterSpacing: -0.5,
-                                                  ),
                                                   maxLines: 2,
                                                   overflow:
                                                       TextOverflow.ellipsis,
+                                                  style: const TextStyle(
+                                                    fontSize: 34,
+                                                    fontWeight: FontWeight.w800,
+                                                    letterSpacing: -0.5,
+                                                    color: Colors.white,
+                                                    height: 0.95,
+                                                  ),
                                                 );
                                               },
                                         );
-                                        return Stack(
-                                          children: [
-                                            // Cinematic hero section with clean clipping
-                                            ClipRRect(
-                                              borderRadius:
-                                                  BorderRadius.circular(20),
-                                              child: GestureDetector(
-                                                onTap: () {
-                                                  _boostLibrary(
-                                                    selectedLibraryId,
-                                                    2,
-                                                  );
-                                                  Navigator.push(
-                                                    context,
-                                                    MaterialPageRoute(
-                                                      builder: (_) =>
-                                                          ItemDetailPage(
-                                                            server:
-                                                                widget.server,
-                                                            token: widget.token,
-                                                            item: item,
-                                                            playback: playback,
-                                                          ),
-                                                    ),
-                                                  );
-                                                },
-                                                child: Container(
-                                                  height: 420,
-                                                  margin: const EdgeInsets.only(
-                                                    left: 20,
-                                                    right: 20,
-                                                    top: 16,
-                                                    bottom: 24,
-                                                  ),
-                                                  decoration: BoxDecoration(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          20,
-                                                        ),
-                                                    image: DecorationImage(
-                                                      image: NetworkImage(
-                                                        '${widget.server}/Items/${item['Id']}/Images/Backdrop',
+                                        return AnimatedSwitcher(
+                                          duration: const Duration(
+                                            milliseconds: 450,
+                                          ),
+                                          switchInCurve: Curves.easeOutCubic,
+                                          switchOutCurve: Curves.easeInCubic,
+                                          transitionBuilder:
+                                              (child, animation) {
+                                                return FadeTransition(
+                                                  opacity: animation,
+                                                  child: SlideTransition(
+                                                    position: Tween<Offset>(
+                                                      begin: const Offset(
+                                                        0.08,
+                                                        0,
                                                       ),
-                                                      fit: BoxFit.cover,
-                                                    ),
+                                                      end: Offset.zero,
+                                                    ).animate(animation),
+                                                    child: child,
                                                   ),
-                                                  child: Stack(
-                                                    children: [
-                                                      // Cinematic vertical overlay
-                                                      Container(
-                                                        decoration: const BoxDecoration(
-                                                          gradient: LinearGradient(
-                                                            begin: Alignment
-                                                                .bottomCenter,
-                                                            end: Alignment
-                                                                .topCenter,
-                                                            colors: [
-                                                              Color(0xF2000000),
-                                                              Color(0xC0000000),
-                                                              Color(0x40000000),
-                                                              Colors
-                                                                  .transparent,
-                                                            ],
-                                                            stops: [
-                                                              0.0,
-                                                              0.35,
-                                                              0.7,
-                                                              1.0,
-                                                            ],
+                                                );
+                                              },
+                                          child: SizedBox(
+                                            key: ValueKey(
+                                              item['Id'] ?? heroIndex,
+                                            ),
+                                            child: Stack(
+                                              children: [
+                                                // Cinematic hero section with clean clipping
+                                                GestureDetector(
+                                                  onTap: () {
+                                                    _boostLibrary(
+                                                      selectedLibraryId,
+                                                      2,
+                                                    );
+                                                    Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                        builder: (_) =>
+                                                            ItemDetailPage(
+                                                              server:
+                                                                  widget.server,
+                                                              token:
+                                                                  widget.token,
+                                                              item: item,
+                                                              playback:
+                                                                  playback,
+                                                            ),
+                                                      ),
+                                                    );
+                                                  },
+                                                  child: Container(
+                                                    height: 420,
+                                                    decoration: BoxDecoration(
+                                                      image: DecorationImage(
+                                                        image: NetworkImage(
+                                                          '${widget.server}/Items/${item['Id']}/Images/Backdrop',
+                                                        ),
+                                                        fit: BoxFit.cover,
+                                                      ),
+                                                    ),
+                                                    child: Stack(
+                                                      children: [
+                                                        // --- Accent-tinted gradient overlay for hero banner only ---
+                                                        Positioned.fill(
+                                                          child: IgnorePointer(
+                                                            child: Container(
+                                                              decoration: BoxDecoration(
+                                                                gradient: LinearGradient(
+                                                                  begin: Alignment
+                                                                      .centerLeft,
+                                                                  end: Alignment
+                                                                      .centerRight,
+                                                                  colors: [
+                                                                    Theme.of(
+                                                                          context,
+                                                                        )
+                                                                        .colorScheme
+                                                                        .primary
+                                                                        .withOpacity(
+                                                                          0.55,
+                                                                        ),
+                                                                    Theme.of(
+                                                                          context,
+                                                                        )
+                                                                        .colorScheme
+                                                                        .primary
+                                                                        .withOpacity(
+                                                                          0.25,
+                                                                        ),
+                                                                    Colors
+                                                                        .transparent,
+                                                                  ],
+                                                                  stops: const [
+                                                                    0.0,
+                                                                    0.35,
+                                                                    0.75,
+                                                                  ],
+                                                                ),
+                                                              ),
+                                                            ),
                                                           ),
                                                         ),
-                                                      ),
-                                                      // Cinematic horizontal overlay for readability
-                                                      IgnorePointer(
-                                                        child: Container(
+                                                        // Cinematic vertical overlay
+                                                        Container(
                                                           decoration: const BoxDecoration(
                                                             gradient: LinearGradient(
                                                               begin: Alignment
-                                                                  .centerLeft,
+                                                                  .bottomCenter,
                                                               end: Alignment
-                                                                  .centerRight,
+                                                                  .topCenter,
                                                               colors: [
                                                                 Color(
-                                                                  0x70000000,
+                                                                  0xF2000000,
+                                                                ),
+                                                                Color(
+                                                                  0xC0000000,
+                                                                ),
+                                                                Color(
+                                                                  0x40000000,
                                                                 ),
                                                                 Colors
                                                                     .transparent,
                                                               ],
+                                                              stops: [
+                                                                0.0,
+                                                                0.35,
+                                                                0.7,
+                                                                1.0,
+                                                              ],
                                                             ),
                                                           ),
                                                         ),
-                                                      ),
-                                                      // Content
-                                                      Container(
-                                                        alignment: Alignment
-                                                            .bottomLeft,
-                                                        padding:
-                                                            const EdgeInsets.fromLTRB(
-                                                              32,
-                                                              24,
-                                                              32,
-                                                              28,
-                                                            ),
-                                                        child: Row(
-                                                          crossAxisAlignment:
-                                                              CrossAxisAlignment
-                                                                  .end,
-                                                          children: [
-                                                            // Left: Logo/title, metadata, play button
-                                                            Expanded(
-                                                              child: Column(
-                                                                mainAxisSize:
-                                                                    MainAxisSize
-                                                                        .min,
-                                                                crossAxisAlignment:
-                                                                    CrossAxisAlignment
-                                                                        .start,
-                                                                children: [
-                                                                  // --- Hero Logo (height changed) ---
-                                                                  heroLogo
-                                                                          is Image
-                                                                      ? Image.network(
-                                                                          '${widget.server}/Items/${item['Id']}/Images/Logo',
-                                                                          height:
-                                                                              88,
-                                                                          fit: BoxFit
-                                                                              .contain,
-                                                                          errorBuilder:
-                                                                              (
-                                                                                context,
-                                                                                error,
-                                                                                stackTrace,
-                                                                              ) {
-                                                                                return Text(
-                                                                                  item['Name'] ??
-                                                                                      '',
-                                                                                  style: const TextStyle(
-                                                                                    color: Colors.white,
-                                                                                    fontSize: 28,
-                                                                                    fontWeight: FontWeight.bold,
-                                                                                    letterSpacing: -0.5,
-                                                                                  ),
-                                                                                  maxLines: 2,
-                                                                                  overflow: TextOverflow.ellipsis,
-                                                                                );
-                                                                              },
-                                                                        )
-                                                                      : heroLogo,
-                                                                  const SizedBox(
-                                                                    height: 12,
+                                                        // Cinematic horizontal overlay for readability
+                                                        IgnorePointer(
+                                                          child: Container(
+                                                            decoration: const BoxDecoration(
+                                                              gradient: LinearGradient(
+                                                                begin: Alignment
+                                                                    .centerLeft,
+                                                                end: Alignment
+                                                                    .centerRight,
+                                                                colors: [
+                                                                  Color(
+                                                                    0xFF000000,
                                                                   ),
-                                                                  // --- Plot Overview ---
-                                                                  if ((item['Overview'] ??
-                                                                          '')
-                                                                      .toString()
-                                                                      .isNotEmpty)
-                                                                    Padding(
-                                                                      padding: const EdgeInsets.only(
-                                                                        bottom:
-                                                                            18,
-                                                                      ),
-                                                                      child: ConstrainedBox(
-                                                                        constraints: const BoxConstraints(
-                                                                          maxWidth:
-                                                                              520,
-                                                                        ),
-                                                                        child: Text(
-                                                                          item['Overview'],
-                                                                          maxLines:
-                                                                              3,
-                                                                          overflow:
-                                                                              TextOverflow.ellipsis,
-                                                                          style: const TextStyle(
-                                                                            color:
-                                                                                Colors.white70,
-                                                                            fontSize:
-                                                                                15,
-                                                                            height:
-                                                                                1.45,
-                                                                          ),
-                                                                        ),
-                                                                      ),
-                                                                    ),
-                                                                  if (productionYear !=
-                                                                          null ||
-                                                                      mediaType
-                                                                          .isNotEmpty)
-                                                                    Padding(
-                                                                      padding: const EdgeInsets.only(
-                                                                        bottom:
-                                                                            8,
-                                                                      ),
-                                                                      child: Wrap(
-                                                                        spacing:
-                                                                            8,
-                                                                        runSpacing:
-                                                                            8,
-                                                                        children: [
-                                                                          if (productionYear !=
-                                                                              null)
-                                                                            _heroChip(
-                                                                              productionYear,
-                                                                            ),
-                                                                          if (mediaType
-                                                                              .isNotEmpty)
-                                                                            _heroChip(
-                                                                              mediaType,
-                                                                            ),
-                                                                        ],
-                                                                      ),
-                                                                    ),
-                                                                  if (item['CommunityRating'] !=
-                                                                      null)
-                                                                    Padding(
-                                                                      padding: const EdgeInsets.only(
-                                                                        bottom:
-                                                                            14,
-                                                                      ),
-                                                                      child: _heroChip(
-                                                                        '${(item['CommunityRating'] as num).toStringAsFixed(1)} ★',
-                                                                        icon: Icons
-                                                                            .star_rounded,
-                                                                      ),
-                                                                    ),
-                                                                  Padding(
-                                                                    padding:
-                                                                        const EdgeInsets.only(
-                                                                          top:
-                                                                              10.0,
-                                                                        ),
-                                                                    child: Wrap(
-                                                                      spacing:
-                                                                          12,
-                                                                      runSpacing:
-                                                                          12,
-                                                                      children: [
-                                                                        FilledButton.icon(
-                                                                          style: FilledButton.styleFrom(
-                                                                            backgroundColor:
-                                                                                Colors.white,
-                                                                            foregroundColor:
-                                                                                Colors.black,
-                                                                            padding: const EdgeInsets.symmetric(
-                                                                              horizontal: 28,
-                                                                              vertical: 10,
-                                                                            ),
-                                                                            shape: RoundedRectangleBorder(
-                                                                              borderRadius: BorderRadius.circular(
-                                                                                22,
-                                                                              ),
-                                                                            ),
-                                                                            textStyle: const TextStyle(
-                                                                              fontSize: 16,
-                                                                              fontWeight: FontWeight.w600,
-                                                                            ),
-                                                                          ),
-                                                                          icon: const Icon(
-                                                                            Icons.play_arrow_rounded,
-                                                                            size:
-                                                                                26,
-                                                                          ),
-                                                                          label: const Text(
-                                                                            'Play Now',
-                                                                          ),
-                                                                          onPressed: () {
-                                                                            _boostLibrary(
-                                                                              selectedLibraryId,
-                                                                              2,
-                                                                            );
-                                                                            Navigator.push(
-                                                                              context,
-                                                                              MaterialPageRoute(
-                                                                                builder:
-                                                                                    (
-                                                                                      _,
-                                                                                    ) => ItemDetailPage(
-                                                                                      server: widget.server,
-                                                                                      token: widget.token,
-                                                                                      item: item,
-                                                                                      playback: playback,
-                                                                                    ),
-                                                                              ),
-                                                                            );
-                                                                          },
-                                                                        ),
-                                                                        OutlinedButton.icon(
-                                                                          style: OutlinedButton.styleFrom(
-                                                                            foregroundColor:
-                                                                                Colors.white,
-                                                                            side: const BorderSide(
-                                                                              color: Colors.white24,
-                                                                            ),
-                                                                            padding: const EdgeInsets.symmetric(
-                                                                              horizontal: 24,
-                                                                              vertical: 10,
-                                                                            ),
-                                                                            shape: RoundedRectangleBorder(
-                                                                              borderRadius: BorderRadius.circular(
-                                                                                22,
-                                                                              ),
-                                                                            ),
-                                                                            textStyle: const TextStyle(
-                                                                              fontSize: 16,
-                                                                              fontWeight: FontWeight.w600,
-                                                                            ),
-                                                                          ),
-                                                                          icon: const Icon(
-                                                                            Icons.info_outline_rounded,
-                                                                          ),
-                                                                          label: const Text(
-                                                                            'Details',
-                                                                          ),
-                                                                          onPressed: () {
-                                                                            _boostLibrary(
-                                                                              selectedLibraryId,
-                                                                              2,
-                                                                            );
-                                                                            Navigator.push(
-                                                                              context,
-                                                                              MaterialPageRoute(
-                                                                                builder:
-                                                                                    (
-                                                                                      _,
-                                                                                    ) => ItemDetailPage(
-                                                                                      server: widget.server,
-                                                                                      token: widget.token,
-                                                                                      item: item,
-                                                                                      playback: playback,
-                                                                                    ),
-                                                                              ),
-                                                                            );
-                                                                          },
-                                                                        ),
-                                                                      ],
-                                                                    ),
+                                                                  Color(
+                                                                    0xF2000000,
                                                                   ),
+                                                                  Color(
+                                                                    0xB3000000,
+                                                                  ),
+                                                                  Color(
+                                                                    0x55000000,
+                                                                  ),
+                                                                  Colors
+                                                                      .transparent,
+                                                                ],
+                                                                stops: [
+                                                                  0.0,
+                                                                  0.18,
+                                                                  0.38,
+                                                                  0.60,
+                                                                  0.82,
                                                                 ],
                                                               ),
                                                             ),
-                                                            // Right: Large poster image
-                                                            Padding(
-                                                              padding:
-                                                                  const EdgeInsets.only(
-                                                                    left: 16,
-                                                                    bottom: 4,
-                                                                    right: 2,
-                                                                  ),
-                                                              child: Container(
-                                                                width: 160,
-                                                                height: 240,
-                                                                decoration: BoxDecoration(
-                                                                  borderRadius:
-                                                                      BorderRadius.circular(
-                                                                        18,
+                                                          ),
+                                                        ),
+                                                        // Content
+                                                        Container(
+                                                          alignment: Alignment
+                                                              .bottomLeft,
+                                                          padding:
+                                                              const EdgeInsets.fromLTRB(
+                                                                32,
+                                                                24,
+                                                                32,
+                                                                28,
+                                                              ),
+                                                          child: Row(
+                                                            crossAxisAlignment:
+                                                                CrossAxisAlignment
+                                                                    .end,
+                                                            children: [
+                                                              // Left: Logo/title, metadata, play button
+                                                              Expanded(
+                                                                child: Column(
+                                                                  mainAxisSize:
+                                                                      MainAxisSize
+                                                                          .min,
+                                                                  crossAxisAlignment:
+                                                                      CrossAxisAlignment
+                                                                          .start,
+                                                                  children: [
+                                                                    // --- Hero Logo (height changed) ---
+                                                                    Image.network(
+                                                                      '${widget.server}/Items/${item['Id']}/Images/Logo',
+                                                                      height:
+                                                                          88,
+                                                                      fit: BoxFit
+                                                                          .contain,
+                                                                      errorBuilder:
+                                                                          (
+                                                                            context,
+                                                                            error,
+                                                                            stackTrace,
+                                                                          ) {
+                                                                            return Text(
+                                                                              item['Name'] ??
+                                                                                  '',
+                                                                              style: const TextStyle(
+                                                                                color: Colors.white,
+                                                                                fontSize: 28,
+                                                                                fontWeight: FontWeight.bold,
+                                                                                letterSpacing: -0.5,
+                                                                              ),
+                                                                              maxLines: 2,
+                                                                              overflow: TextOverflow.ellipsis,
+                                                                            );
+                                                                          },
+                                                                    ),
+                                                                    const SizedBox(
+                                                                      height:
+                                                                          20,
+                                                                    ),
+                                                                    // --- Plot Overview ---
+                                                                    if ((item['Overview'] ??
+                                                                            '')
+                                                                        .toString()
+                                                                        .isNotEmpty)
+                                                                      Padding(
+                                                                        padding: const EdgeInsets.only(
+                                                                          bottom:
+                                                                              18,
+                                                                        ),
+                                                                        child: ConstrainedBox(
+                                                                          constraints: const BoxConstraints(
+                                                                            maxWidth:
+                                                                                520,
+                                                                          ),
+                                                                          child: Text(
+                                                                            item['Overview'],
+                                                                            maxLines:
+                                                                                3,
+                                                                            overflow:
+                                                                                TextOverflow.ellipsis,
+                                                                            style: const TextStyle(
+                                                                              color: Colors.white70,
+                                                                              fontSize: 15,
+                                                                              height: 1.45,
+                                                                            ),
+                                                                          ),
+                                                                        ),
                                                                       ),
-                                                                  border: Border.all(
-                                                                    color: Colors
-                                                                        .white12,
-                                                                  ),
-                                                                  boxShadow: [
-                                                                    BoxShadow(
-                                                                      color: Colors
-                                                                          .black
-                                                                          .withOpacity(
-                                                                            0.22,
+                                                                    if (productionYear !=
+                                                                            null ||
+                                                                        mediaType
+                                                                            .isNotEmpty)
+                                                                      Padding(
+                                                                        padding: const EdgeInsets.only(
+                                                                          bottom:
+                                                                              8,
+                                                                        ),
+                                                                        child: Wrap(
+                                                                          spacing:
+                                                                              8,
+                                                                          runSpacing:
+                                                                              8,
+                                                                          children: [
+                                                                            if (productionYear !=
+                                                                                null)
+                                                                              _heroChip(
+                                                                                productionYear,
+                                                                              ),
+                                                                            if (mediaType.isNotEmpty)
+                                                                              _heroChip(
+                                                                                mediaType,
+                                                                              ),
+                                                                          ],
+                                                                        ),
+                                                                      ),
+                                                                    if (item['CommunityRating'] !=
+                                                                        null)
+                                                                      Padding(
+                                                                        padding: const EdgeInsets.only(
+                                                                          bottom:
+                                                                              14,
+                                                                        ),
+                                                                        child: _heroChip(
+                                                                          '${(item['CommunityRating'] as num).toStringAsFixed(1)} ★',
+                                                                          icon:
+                                                                              Icons.star_rounded,
+                                                                        ),
+                                                                      ),
+                                                                    Padding(
+                                                                      padding:
+                                                                          const EdgeInsets.only(
+                                                                            top:
+                                                                                10.0,
                                                                           ),
-                                                                      blurRadius:
-                                                                          28,
-                                                                      offset:
-                                                                          const Offset(
-                                                                            0,
-                                                                            10,
+                                                                      child: Wrap(
+                                                                        spacing:
+                                                                            16,
+                                                                        runSpacing:
+                                                                            12,
+                                                                        children: [
+                                                                          FilledButton.icon(
+                                                                            style: ButtonStyle(
+                                                                              backgroundColor: WidgetStatePropertyAll(
+                                                                                Theme.of(
+                                                                                  context,
+                                                                                ).colorScheme.primary,
+                                                                              ),
+                                                                              foregroundColor: WidgetStatePropertyAll(
+                                                                                Theme.of(
+                                                                                  context,
+                                                                                ).colorScheme.onPrimary,
+                                                                              ),
+                                                                              padding: const WidgetStatePropertyAll(
+                                                                                EdgeInsets.symmetric(
+                                                                                  horizontal: 34,
+                                                                                  vertical: 18,
+                                                                                ),
+                                                                              ),
+                                                                              shape: const WidgetStatePropertyAll(
+                                                                                StadiumBorder(),
+                                                                              ),
+                                                                              elevation: const WidgetStatePropertyAll(
+                                                                                2,
+                                                                              ),
+                                                                              textStyle: const WidgetStatePropertyAll(
+                                                                                TextStyle(
+                                                                                  fontSize: 16,
+                                                                                  fontWeight: FontWeight.w700,
+                                                                                ),
+                                                                              ),
+                                                                              overlayColor: const WidgetStatePropertyAll(
+                                                                                Colors.white10,
+                                                                              ),
+                                                                              mouseCursor: const WidgetStatePropertyAll(
+                                                                                SystemMouseCursors.click,
+                                                                              ),
+                                                                            ),
+                                                                            icon: const Icon(
+                                                                              Icons.play_arrow_rounded,
+                                                                              size: 28,
+                                                                            ),
+                                                                            label: const Text(
+                                                                              'Play Now',
+                                                                            ),
+                                                                            onPressed: () {
+                                                                              _boostLibrary(
+                                                                                selectedLibraryId,
+                                                                                2,
+                                                                              );
+                                                                              Navigator.push(
+                                                                                context,
+                                                                                MaterialPageRoute(
+                                                                                  builder:
+                                                                                      (
+                                                                                        _,
+                                                                                      ) => ItemDetailPage(
+                                                                                        server: widget.server,
+                                                                                        token: widget.token,
+                                                                                        item: item,
+                                                                                        playback: playback,
+                                                                                      ),
+                                                                                ),
+                                                                              );
+                                                                            },
                                                                           ),
+                                                                          OutlinedButton.icon(
+                                                                            style: ButtonStyle(
+                                                                              padding: const WidgetStatePropertyAll(
+                                                                                EdgeInsets.symmetric(
+                                                                                  horizontal: 30,
+                                                                                  vertical: 18,
+                                                                                ),
+                                                                              ),
+                                                                              shape: const WidgetStatePropertyAll(
+                                                                                StadiumBorder(),
+                                                                              ),
+                                                                              side: const WidgetStatePropertyAll(
+                                                                                BorderSide(
+                                                                                  color: Colors.white30,
+                                                                                  width: 1.2,
+                                                                                ),
+                                                                              ),
+                                                                              foregroundColor: const WidgetStatePropertyAll(
+                                                                                Colors.white,
+                                                                              ),
+                                                                              textStyle: const WidgetStatePropertyAll(
+                                                                                TextStyle(
+                                                                                  fontSize: 16,
+                                                                                  fontWeight: FontWeight.w700,
+                                                                                ),
+                                                                              ),
+                                                                              overlayColor: const WidgetStatePropertyAll(
+                                                                                Colors.white10,
+                                                                              ),
+                                                                              mouseCursor: const WidgetStatePropertyAll(
+                                                                                SystemMouseCursors.click,
+                                                                              ),
+                                                                            ),
+                                                                            icon: const Icon(
+                                                                              Icons.info_outline_rounded,
+                                                                            ),
+                                                                            label: const Text(
+                                                                              'Details',
+                                                                            ),
+                                                                            onPressed: () {
+                                                                              _boostLibrary(
+                                                                                selectedLibraryId,
+                                                                                2,
+                                                                              );
+                                                                              Navigator.push(
+                                                                                context,
+                                                                                MaterialPageRoute(
+                                                                                  builder:
+                                                                                      (
+                                                                                        _,
+                                                                                      ) => ItemDetailPage(
+                                                                                        server: widget.server,
+                                                                                        token: widget.token,
+                                                                                        item: item,
+                                                                                        playback: playback,
+                                                                                      ),
+                                                                                ),
+                                                                              );
+                                                                            },
+                                                                          ),
+                                                                        ],
+                                                                      ),
                                                                     ),
                                                                   ],
                                                                 ),
-                                                                clipBehavior:
-                                                                    Clip.hardEdge,
-                                                                child: Image.network(
-                                                                  '${widget.server}/Items/${item['Id']}/Images/Primary',
-                                                                  fit: BoxFit
-                                                                      .cover,
-                                                                  errorBuilder: (_, __, ___) => Container(
-                                                                    color: Colors
-                                                                        .grey[800],
-                                                                    child: const Icon(
-                                                                      Icons
-                                                                          .movie,
+                                                              ),
+                                                              // Right: Large poster image
+                                                              Padding(
+                                                                padding:
+                                                                    const EdgeInsets.only(
+                                                                      left: 16,
+                                                                      bottom: 4,
+                                                                      right: 2,
+                                                                    ),
+                                                                child: Container(
+                                                                  width: 160,
+                                                                  height: 240,
+                                                                  decoration: BoxDecoration(
+                                                                    borderRadius:
+                                                                        BorderRadius.circular(
+                                                                          18,
+                                                                        ),
+                                                                    border: Border.all(
                                                                       color: Colors
-                                                                          .white60,
-                                                                      size: 48,
+                                                                          .white12,
+                                                                    ),
+                                                                    boxShadow: [
+                                                                      BoxShadow(
+                                                                        color: Colors
+                                                                            .black
+                                                                            .withOpacity(
+                                                                              0.22,
+                                                                            ),
+                                                                        blurRadius:
+                                                                            28,
+                                                                        offset:
+                                                                            const Offset(
+                                                                              0,
+                                                                              10,
+                                                                            ),
+                                                                      ),
+                                                                    ],
+                                                                  ),
+                                                                  clipBehavior:
+                                                                      Clip.hardEdge,
+                                                                  child: Image.network(
+                                                                    '${widget.server}/Items/${item['Id']}/Images/Primary',
+                                                                    fit: BoxFit
+                                                                        .cover,
+                                                                    errorBuilder: (_, __, ___) => Container(
+                                                                      color: Colors
+                                                                          .grey[800],
+                                                                      child: const Icon(
+                                                                        Icons
+                                                                            .movie,
+                                                                        color: Colors
+                                                                            .white60,
+                                                                        size:
+                                                                            48,
+                                                                      ),
                                                                     ),
                                                                   ),
                                                                 ),
                                                               ),
-                                                            ),
-                                                          ],
+                                                            ],
+                                                          ),
                                                         ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ),
+                                                Positioned(
+                                                  left: 8,
+                                                  top: 0,
+                                                  bottom: 0,
+                                                  child: IconButton(
+                                                    icon: Opacity(
+                                                      opacity: 0.75,
+                                                      child: const Icon(
+                                                        Icons.chevron_left,
+                                                        color: Colors.white,
+                                                        size: 28,
                                                       ),
-                                                    ],
+                                                    ),
+                                                    onPressed: () {
+                                                      setHeroState(() {
+                                                        if (items.isEmpty)
+                                                          return;
+                                                        heroIndex =
+                                                            (heroIndex -
+                                                                1 +
+                                                                items.length) %
+                                                            items.length;
+                                                      });
+                                                    },
                                                   ),
                                                 ),
-                                              ),
-                                            ),
-                                            Positioned(
-                                              left: 8,
-                                              top: 0,
-                                              bottom: 0,
-                                              child: IconButton(
-                                                icon: Opacity(
-                                                  opacity: 0.75,
-                                                  child: const Icon(
-                                                    Icons.chevron_left,
-                                                    color: Colors.white,
-                                                    size: 28,
+                                                Positioned(
+                                                  right: 8,
+                                                  top: 0,
+                                                  bottom: 0,
+                                                  child: IconButton(
+                                                    icon: Opacity(
+                                                      opacity: 0.75,
+                                                      child: const Icon(
+                                                        Icons.chevron_right,
+                                                        color: Colors.white,
+                                                        size: 28,
+                                                      ),
+                                                    ),
+                                                    onPressed: () {
+                                                      setHeroState(() {
+                                                        if (items.isEmpty)
+                                                          return;
+                                                        heroIndex =
+                                                            (heroIndex + 1) %
+                                                            items.length;
+                                                      });
+                                                    },
                                                   ),
                                                 ),
-                                                onPressed: () {
-                                                  setHeroState(() {
-                                                    if (items.isEmpty) return;
-                                                    heroIndex =
-                                                        (heroIndex -
-                                                            1 +
-                                                            items.length) %
-                                                        items.length;
-                                                  });
-                                                },
-                                              ),
+                                              ],
                                             ),
-                                            Positioned(
-                                              right: 8,
-                                              top: 0,
-                                              bottom: 0,
-                                              child: IconButton(
-                                                icon: Opacity(
-                                                  opacity: 0.75,
-                                                  child: const Icon(
-                                                    Icons.chevron_right,
-                                                    color: Colors.white,
-                                                    size: 28,
-                                                  ),
-                                                ),
-                                                onPressed: () {
-                                                  setHeroState(() {
-                                                    if (items.isEmpty) return;
-                                                    heroIndex =
-                                                        (heroIndex + 1) %
-                                                        items.length;
-                                                  });
-                                                },
-                                              ),
-                                            ),
-                                          ],
+                                          ),
                                         );
                                       },
                                     );
@@ -1346,8 +1516,8 @@ class _HomePageState extends State<HomePage> {
                                                             errorBuilder:
                                                                 (
                                                                   _,
-                                                                  __,
-                                                                  ___,
+                                                                  _,
+                                                                  _,
                                                                 ) => const Icon(
                                                                   Icons
                                                                       .music_note,
