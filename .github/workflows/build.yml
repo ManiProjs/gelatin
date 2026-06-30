@@ -87,34 +87,3 @@ jobs:
         with:
           name: linux-build
           path: build/linux/x64/release/bundle/
-
-  build-macos:
-    name: macOS
-    runs-on: macos-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: stable
-          cache: true
-
-      - name: Enable macOS desktop
-        run: flutter config --enable-macos-desktop
-
-      - name: Install dependencies
-        run: flutter pub get
-
-      # Requires code signing to be disabled in the Xcode project
-      # (CODE_SIGNING_ALLOWED = NO for Release)
-      - name: Build macOS
-        run: flutter build macos --release
-
-      - name: Upload macOS artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: macos-build
-          path: build/macos/Build/Products/Release/

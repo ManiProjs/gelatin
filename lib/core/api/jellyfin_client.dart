@@ -27,7 +27,7 @@ class JellyfinClient {
       options: Options(
         headers: {
           'X-Emby-Authorization':
-              'MediaBrowser Client="Gelatin", Device="Desktop", DeviceId="gelatin", Version="0.1.0"',
+              'MediaBrowser Client="Gelatin", Device="Desktop", DeviceId="gelatin", Version="1.0.0"',
         },
       ),
     );
