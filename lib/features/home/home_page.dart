@@ -213,8 +213,6 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final themeController = ThemeControllerScope.of(context);
-
     return Scaffold(
       body: FutureBuilder<List<dynamic>>(
         future: librariesFuture,
