@@ -295,165 +295,260 @@ class ItemDetailPage extends StatelessWidget {
                                 ),
                               ],
                               const SizedBox(height: 20),
-                              Wrap(
-                                spacing: 12,
-                                children: [
-                                  FilledButton.icon(
-                                    onPressed: () async {
-                                      try {
-                                        final id = item['Id'].toString();
-                                        final type = item['Type'];
+                              // --- Begin Resume/Play Button Area ---
+                              Builder(
+                                builder: (context) {
+                                  final playbackPositionTicks =
+                                      item['UserData']?['PlaybackPositionTicks'] ??
+                                      0;
+                                  final canResume = playbackPositionTicks > 0;
+                                  final runTimeTicks =
+                                      item['RunTimeTicks'] ?? 0;
+                                  double progress = 0.0;
+                                  if (runTimeTicks is int &&
+                                      runTimeTicks > 0 &&
+                                      playbackPositionTicks is int) {
+                                    progress =
+                                        playbackPositionTicks / runTimeTicks;
+                                    if (progress < 0) progress = 0.0;
+                                    if (progress > 1) progress = 1.0;
+                                  }
+                                  String formatTicks(int ticks) {
+                                    final seconds = (ticks / 10000000).floor();
+                                    final h = (seconds ~/ 3600)
+                                        .toString()
+                                        .padLeft(2, '0');
+                                    final m = ((seconds % 3600) ~/ 60)
+                                        .toString()
+                                        .padLeft(2, '0');
+                                    final s = (seconds % 60).toString().padLeft(
+                                      2,
+                                      '0',
+                                    );
+                                    return '$h:$m:$s';
+                                  }
 
-                                        String streamUrl;
-
-                                        if (type == 'Audio') {
-                                          // direct music stream (no PlaybackInfo)
-                                          streamUrl =
-                                              '$server/Audio/$id/stream';
-                                        } else {
-                                          try {
-                                            final controller =
-                                                PlaybackController(playback);
-                                            streamUrl = await controller
-                                                .resolve(id);
-                                          } catch (_) {
-                                            // fallback if PlaybackInfo fails
-                                            streamUrl =
-                                                '$server/Items/$id/Download';
-                                          }
-                                        }
-
-                                        if (!context.mounted) return;
-
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) => PlayerPage(
-                                              url: streamUrl,
-                                              title: item['Name'] ?? '',
-                                              headers: {'X-Emby-Token': token},
-                                            ),
+                                  return Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      if (canResume) ...[
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                            bottom: 10.0,
                                           ),
-                                        );
-                                      } catch (e) {
-                                        if (!context.mounted) return;
-
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          const SnackBar(
-                                            content: Text(
-                                              'Playback unavailable for this item',
-                                            ),
-                                          ),
-                                        );
-                                      }
-                                    },
-                                    icon: const Icon(Icons.play_arrow),
-                                    label: const Text("Play Now"),
-                                  ),
-                                  OutlinedButton.icon(
-                                    onPressed: () {
-                                      showModalBottomSheet(
-                                        context: context,
-                                        isScrollControlled: true,
-                                        shape: const RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.vertical(
-                                            top: Radius.circular(18),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              LinearProgressIndicator(
+                                                value: progress,
+                                                minHeight: 6,
+                                                backgroundColor: Colors.white12,
+                                                valueColor:
+                                                    AlwaysStoppedAnimation<
+                                                      Color
+                                                    >(Colors.amber),
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                'Resume from ${formatTicks(playbackPositionTicks)}',
+                                                style: const TextStyle(
+                                                  color: Colors.white70,
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ),
-                                        builder: (context) {
-                                          final entries = item.entries
-                                              .where(
-                                                (e) =>
-                                                    e.value != null &&
-                                                    e.value is! Map &&
-                                                    e.value is! List,
-                                              )
-                                              .toList();
-                                          return Padding(
-                                            padding: MediaQuery.of(
-                                              context,
-                                            ).viewInsets,
-                                            child: SizedBox(
-                                              height:
-                                                  MediaQuery.of(
-                                                    context,
-                                                  ).size.height *
-                                                  0.65,
-                                              child: Column(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  Container(
-                                                    width: 40,
-                                                    height: 5,
-                                                    margin:
-                                                        const EdgeInsets.symmetric(
-                                                          vertical: 10,
-                                                        ),
-                                                    decoration: BoxDecoration(
-                                                      color: Colors.grey[400],
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                            12,
-                                                          ),
-                                                    ),
-                                                  ),
-                                                  const Text(
-                                                    "Technical Info",
-                                                    style: TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      fontSize: 18,
-                                                    ),
-                                                  ),
-                                                  const Divider(),
-                                                  Expanded(
-                                                    child: ListView.builder(
-                                                      itemCount: entries.length,
-                                                      itemBuilder: (context, i) {
-                                                        final e = entries[i];
-                                                        return ListTile(
-                                                          title: Text(
-                                                            e.key,
-                                                            style:
-                                                                const TextStyle(
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .w600,
-                                                                ),
-                                                          ),
-                                                          subtitle: Text(
-                                                            e.value.toString(),
-                                                            style:
-                                                                const TextStyle(
-                                                                  fontSize: 15,
-                                                                ),
-                                                          ),
+                                      ],
+                                      Wrap(
+                                        spacing: 12,
+                                        children: [
+                                          FilledButton.icon(
+                                            onPressed: () async {
+                                              try {
+                                                final id = item['Id']
+                                                    .toString();
+                                                final type = item['Type'];
+
+                                                String streamUrl;
+
+                                                if (type == 'Audio') {
+                                                  // direct music stream (no PlaybackInfo)
+                                                  streamUrl =
+                                                      '$server/Audio/$id/stream';
+                                                } else {
+                                                  try {
+                                                    final controller =
+                                                        PlaybackController(
+                                                          playback,
                                                         );
+                                                    streamUrl = await controller
+                                                        .resolve(id);
+                                                  } catch (_) {
+                                                    // fallback if PlaybackInfo fails
+                                                    streamUrl =
+                                                        '$server/Items/$id/Download';
+                                                  }
+                                                }
+
+                                                if (!context.mounted) return;
+
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(
+                                                    builder: (_) => PlayerPage(
+                                                      url: streamUrl,
+                                                      title: item['Name'] ?? '',
+                                                      headers: {
+                                                        'X-Emby-Token': token,
                                                       },
                                                     ),
                                                   ),
-                                                ],
+                                                );
+                                              } catch (e) {
+                                                if (!context.mounted) return;
+
+                                                ScaffoldMessenger.of(
+                                                  context,
+                                                ).showSnackBar(
+                                                  const SnackBar(
+                                                    content: Text(
+                                                      'Playback unavailable for this item',
+                                                    ),
+                                                  ),
+                                                );
+                                              }
+                                            },
+                                            icon: Icon(
+                                              canResume
+                                                  ? Icons.play_circle_fill
+                                                  : Icons.play_arrow,
+                                            ),
+                                            label: Text(
+                                              canResume ? 'Resume' : 'Play Now',
+                                            ),
+                                          ),
+                                          OutlinedButton.icon(
+                                            onPressed: () {
+                                              showModalBottomSheet(
+                                                context: context,
+                                                isScrollControlled: true,
+                                                shape:
+                                                    const RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.vertical(
+                                                            top:
+                                                                Radius.circular(
+                                                                  18,
+                                                                ),
+                                                          ),
+                                                    ),
+                                                builder: (context) {
+                                                  final entries = item.entries
+                                                      .where(
+                                                        (e) =>
+                                                            e.value != null &&
+                                                            e.value is! Map &&
+                                                            e.value is! List,
+                                                      )
+                                                      .toList();
+                                                  return Padding(
+                                                    padding: MediaQuery.of(
+                                                      context,
+                                                    ).viewInsets,
+                                                    child: SizedBox(
+                                                      height:
+                                                          MediaQuery.of(
+                                                            context,
+                                                          ).size.height *
+                                                          0.65,
+                                                      child: Column(
+                                                        mainAxisSize:
+                                                            MainAxisSize.min,
+                                                        children: [
+                                                          Container(
+                                                            width: 40,
+                                                            height: 5,
+                                                            margin:
+                                                                const EdgeInsets.symmetric(
+                                                                  vertical: 10,
+                                                                ),
+                                                            decoration:
+                                                                BoxDecoration(
+                                                                  color: Colors
+                                                                      .grey[400],
+                                                                  borderRadius:
+                                                                      BorderRadius.circular(
+                                                                        12,
+                                                                      ),
+                                                                ),
+                                                          ),
+                                                          const Text(
+                                                            "Technical Info",
+                                                            style: TextStyle(
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold,
+                                                              fontSize: 18,
+                                                            ),
+                                                          ),
+                                                          const Divider(),
+                                                          Expanded(
+                                                            child: ListView.builder(
+                                                              itemCount: entries
+                                                                  .length,
+                                                              itemBuilder: (context, i) {
+                                                                final e =
+                                                                    entries[i];
+                                                                return ListTile(
+                                                                  title: Text(
+                                                                    e.key,
+                                                                    style: const TextStyle(
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .w600,
+                                                                    ),
+                                                                  ),
+                                                                  subtitle: Text(
+                                                                    e.value
+                                                                        .toString(),
+                                                                    style: const TextStyle(
+                                                                      fontSize:
+                                                                          15,
+                                                                    ),
+                                                                  ),
+                                                                );
+                                                              },
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  );
+                                                },
+                                              );
+                                            },
+                                            icon: const Icon(
+                                              Icons.info_outline_rounded,
+                                            ),
+                                            label: const Text("Technical Info"),
+                                            style: OutlinedButton.styleFrom(
+                                              foregroundColor: Colors.white,
+                                              side: const BorderSide(
+                                                color: Colors.white24,
                                               ),
                                             ),
-                                          );
-                                        },
-                                      );
-                                    },
-                                    icon: const Icon(
-                                      Icons.info_outline_rounded,
-                                    ),
-                                    label: const Text("Technical Info"),
-                                    style: OutlinedButton.styleFrom(
-                                      foregroundColor: Colors.white,
-                                      side: const BorderSide(
-                                        color: Colors.white24,
+                                          ),
+                                        ],
                                       ),
-                                    ),
-                                  ),
-                                ],
+                                    ],
+                                  );
+                                },
                               ),
+                              // --- End Resume/Play Button Area ---
                             ],
                           ),
                         ),
