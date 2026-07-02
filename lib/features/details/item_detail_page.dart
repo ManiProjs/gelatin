@@ -129,7 +129,8 @@ class _ItemDetailPageState extends State<ItemDetailPage> {
     try {
       final response = await http.get(
         Uri.parse(
-          '${widget.server}/Users/Me/Items/$id?Fields=UserData,MediaSources',
+          '${widget.server}/Users/Me/Items/$id'
+          '?Fields=UserData,MediaSources,RunTimeTicks,Overview,Taglines,Genres,Studios,People,ProviderIds,ProductionLocations',
         ),
         headers: {'X-Emby-Token': widget.token},
       );
@@ -151,58 +152,43 @@ class _ItemDetailPageState extends State<ItemDetailPage> {
     final id = _item['Id']?.toString();
     if (id == null || id.isEmpty) return;
 
-    final previousPlaybackPositionTicks =
-        (_item['UserData']?['PlaybackPositionTicks'] as int?) ?? 0;
-
-    Future<bool> tryRefresh({required bool acceptUnchanged}) async {
+    Future<bool> tryRefresh() async {
       final latestItem = await _fetchLatestItem(id);
       if (!mounted || latestItem == null) return false;
 
-      final latestUserData = latestItem['UserData'] is Map
-          ? Map<String, dynamic>.from(latestItem['UserData'] as Map)
-          : null;
-      final latestMediaSources = latestItem['MediaSources'];
-      final latestRunTimeTicks = latestItem['RunTimeTicks'];
-      final latestPlaybackPositionTicks =
-          (latestUserData?['PlaybackPositionTicks'] as int?) ?? 0;
-
-      final changed =
-          latestPlaybackPositionTicks != previousPlaybackPositionTicks ||
-          latestMediaSources != null ||
-          latestRunTimeTicks != null;
-
-      if (!changed && !acceptUnchanged) {
-        return false;
-      }
-
       setState(() {
-        final updated = Map<String, dynamic>.from(_item);
-
-        if (latestUserData != null) {
-          updated['UserData'] = latestUserData;
-        }
-        if (latestMediaSources != null) {
-          updated['MediaSources'] = latestMediaSources;
-        }
-        if (latestRunTimeTicks != null) {
-          updated['RunTimeTicks'] = latestRunTimeTicks;
-        }
-
-        _item = updated;
+        _item = {..._item, ...latestItem};
       });
 
       return true;
     }
 
-    if (await tryRefresh(acceptUnchanged: false)) return;
+    if (await tryRefresh()) return;
 
-    await Future<void>.delayed(const Duration(milliseconds: 350));
+    await Future<void>.delayed(const Duration(milliseconds: 400));
     if (!mounted) return;
-    if (await tryRefresh(acceptUnchanged: false)) return;
+    if (await tryRefresh()) return;
 
-    await Future<void>.delayed(const Duration(milliseconds: 700));
+    await Future<void>.delayed(const Duration(milliseconds: 900));
     if (!mounted) return;
-    await tryRefresh(acceptUnchanged: true);
+    await tryRefresh();
+  }
+
+  void _applyLocalPlaybackPosition(Duration? position) {
+    if (position == null) return;
+
+    final playbackTicks = position.inMicroseconds * 10;
+    final updated = Map<String, dynamic>.from(_item);
+    final userData = updated['UserData'] is Map
+        ? Map<String, dynamic>.from(updated['UserData'] as Map)
+        : <String, dynamic>{};
+
+    userData['PlaybackPositionTicks'] = playbackTicks;
+    updated['UserData'] = userData;
+
+    setState(() {
+      _item = updated;
+    });
   }
 
   @override
@@ -213,9 +199,22 @@ class _ItemDetailPageState extends State<ItemDetailPage> {
     final playback = widget.playback;
     final id = item['Id'];
 
-    final backdropUrl = '$server/Items/$id/Images/Backdrop';
-    final posterUrl = '$server/Items/$id/Images/Primary';
-    final logoUrl = '$server/Items/$id/Images/Logo';
+    final imageTags = item['ImageTags'] is Map
+        ? Map<String, dynamic>.from(item['ImageTags'] as Map)
+        : const <String, dynamic>{};
+    final backdropImageTags = item['BackdropImageTags'] is List
+        ? List<dynamic>.from(item['BackdropImageTags'] as List)
+        : const <dynamic>[];
+
+    final hasBackdrop = backdropImageTags.isNotEmpty;
+    final hasPoster = imageTags['Primary'] != null;
+    final hasLogo = imageTags['Logo'] != null;
+
+    final backdropUrl = hasBackdrop
+        ? '$server/Items/$id/Images/Backdrop/0'
+        : (hasPoster ? '$server/Items/$id/Images/Primary' : null);
+    final posterUrl = hasPoster ? '$server/Items/$id/Images/Primary' : null;
+    final logoUrl = hasLogo ? '$server/Items/$id/Images/Logo' : null;
 
     final runtimeLabel = _formatRuntime(item['RunTimeTicks']);
     final premiereDate = _formatDate(item['PremiereDate']);
@@ -259,13 +258,16 @@ class _ItemDetailPageState extends State<ItemDetailPage> {
                   background: Stack(
                     fit: StackFit.expand,
                     children: [
-                      Image.network(
-                        backdropUrl,
-                        headers: {'X-Emby-Token': token},
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, _, _) =>
-                            Container(color: Colors.black),
-                      ),
+                      if (backdropUrl != null)
+                        Image.network(
+                          backdropUrl,
+                          headers: {'X-Emby-Token': token},
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, _, _) =>
+                              Container(color: Colors.black),
+                        )
+                      else
+                        Container(color: Colors.black),
                       Container(
                         decoration: const BoxDecoration(
                           gradient: LinearGradient(
@@ -312,25 +314,39 @@ class _ItemDetailPageState extends State<ItemDetailPage> {
                               ),
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(12),
-                                child: Image.network(
-                                  posterUrl,
-                                  headers: {'X-Emby-Token': token},
-                                  width: 160,
-                                  height: 240,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, _, _) => const SizedBox(
-                                    width: 160,
-                                    height: 240,
-                                    child: ColoredBox(
-                                      color: Colors.black26,
-                                      child: Icon(
-                                        Icons.movie,
-                                        size: 80,
-                                        color: Colors.white54,
+                                child: posterUrl != null
+                                    ? Image.network(
+                                        posterUrl,
+                                        headers: {'X-Emby-Token': token},
+                                        width: 160,
+                                        height: 240,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (_, _, _) =>
+                                            const SizedBox(
+                                              width: 160,
+                                              height: 240,
+                                              child: ColoredBox(
+                                                color: Colors.black26,
+                                                child: Icon(
+                                                  Icons.movie,
+                                                  size: 80,
+                                                  color: Colors.white54,
+                                                ),
+                                              ),
+                                            ),
+                                      )
+                                    : const SizedBox(
+                                        width: 160,
+                                        height: 240,
+                                        child: ColoredBox(
+                                          color: Colors.black26,
+                                          child: Icon(
+                                            Icons.movie,
+                                            size: 80,
+                                            color: Colors.white54,
+                                          ),
+                                        ),
                                       ),
-                                    ),
-                                  ),
-                                ),
                               ),
                             ),
                             const SizedBox(width: 24),
@@ -339,11 +355,22 @@ class _ItemDetailPageState extends State<ItemDetailPage> {
                                 mainAxisSize: MainAxisSize.min,
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Image.network(
-                                    logoUrl,
-                                    headers: {'X-Emby-Token': token},
-                                    height: 72,
-                                    errorBuilder: (_, _, _) => Text(
+                                  if (logoUrl != null)
+                                    Image.network(
+                                      logoUrl,
+                                      headers: {'X-Emby-Token': token},
+                                      height: 72,
+                                      errorBuilder: (_, _, _) => Text(
+                                        item['Name'] ?? 'Unknown',
+                                        style: const TextStyle(
+                                          fontSize: 32,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    )
+                                  else
+                                    Text(
                                       item['Name'] ?? 'Unknown',
                                       style: const TextStyle(
                                         fontSize: 32,
@@ -351,7 +378,6 @@ class _ItemDetailPageState extends State<ItemDetailPage> {
                                         color: Colors.white,
                                       ),
                                     ),
-                                  ),
                                   const SizedBox(height: 12),
                                   Wrap(
                                     spacing: 8,
@@ -554,7 +580,7 @@ class _ItemDetailPageState extends State<ItemDetailPage> {
                                                     if (!context.mounted)
                                                       return;
 
-                                                    await Navigator.push(
+                                                    final result = await Navigator.push(
                                                       context,
                                                       MaterialPageRoute(
                                                         builder: (_) => PlayerPage(
@@ -580,15 +606,48 @@ class _ItemDetailPageState extends State<ItemDetailPage> {
                                                         ),
                                                       ),
                                                     );
-
                                                     if (!context.mounted) {
                                                       return;
                                                     }
 
+                                                    if (result is Duration) {
+                                                      _applyLocalPlaybackPosition(
+                                                        result,
+                                                      );
+                                                    } else if (result is int) {
+                                                      // assume Jellyfin ticks (100ns units)
+                                                      final microseconds =
+                                                          result ~/ 10;
+                                                      _applyLocalPlaybackPosition(
+                                                        Duration(
+                                                          microseconds:
+                                                              microseconds,
+                                                        ),
+                                                      );
+                                                    } else if (result is Map) {
+                                                      final value =
+                                                          result['position'];
+                                                      if (value is Duration) {
+                                                        _applyLocalPlaybackPosition(
+                                                          value,
+                                                        );
+                                                      } else if (value is int) {
+                                                        final microseconds =
+                                                            value ~/ 10;
+                                                        _applyLocalPlaybackPosition(
+                                                          Duration(
+                                                            microseconds:
+                                                                microseconds,
+                                                          ),
+                                                        );
+                                                      }
+                                                    }
+
                                                     await _refreshItem();
                                                   } catch (_) {
-                                                    if (!context.mounted)
+                                                    if (!context.mounted) {
                                                       return;
+                                                    }
 
                                                     ScaffoldMessenger.of(
                                                       context,

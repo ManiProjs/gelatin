@@ -297,7 +297,7 @@ class _PlayerPageState extends State<PlayerPage>
     await _reportPlaybackStopped();
 
     if (!mounted) return;
-    Navigator.pop(context);
+    Navigator.pop(context, position);
   }
 
   @override
