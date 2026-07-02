@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:window_manager/window_manager.dart';
@@ -12,12 +14,18 @@ class PlayerPage extends StatefulWidget {
   final String url;
   final String title;
   final Map<String, String>? headers;
+  final Duration? startPosition;
+  final String server;
+  final String itemId;
 
   const PlayerPage({
     super.key,
     required this.url,
     required this.title,
     this.headers,
+    this.startPosition,
+    required this.server,
+    required this.itemId,
   });
 
   @override
@@ -40,6 +48,12 @@ class _PlayerPageState extends State<PlayerPage>
   Timer? _controlsTimer;
 
   bool _isFullscreen = false;
+  bool _appliedInitialSeek = false;
+  Timer? _progressReportTimer;
+  bool _reportedPlaybackStart = false;
+  bool _isClosingPlayback = false;
+  StreamSubscription<bool>? _playingSubscription;
+  bool _isHandlingBack = false;
 
   Future<void> _toggleFullscreen() async {
     final fullscreen = await windowManager.isFullScreen();
@@ -51,21 +65,34 @@ class _PlayerPageState extends State<PlayerPage>
     });
   }
 
-  void _togglePlayPause() {
+  Future<void> _togglePlayPause() async {
     if (isPlaying) {
-      player.pause();
+      await player.pause();
+      await _reportPlaybackProgress(isPaused: true);
     } else {
-      player.play();
+      await player.play();
+      await _reportPlaybackProgress(isPaused: false);
     }
     playPauseAnim.forward(from: 0);
   }
 
-  void _seekRelative(int seconds) {
+  Future<void> _seekRelative(int seconds) async {
     final target = position + Duration(seconds: seconds);
     final clamped = target < Duration.zero
         ? Duration.zero
         : (target > duration ? duration : target);
-    player.seek(clamped);
+    await player.seek(clamped);
+    setState(() => position = clamped);
+    await _reportPlaybackProgress();
+  }
+
+  Future<void> _seekTo(Duration target) async {
+    final clamped = target < Duration.zero
+        ? Duration.zero
+        : (target > duration ? duration : target);
+    await player.seek(clamped);
+    setState(() => position = clamped);
+    await _reportPlaybackProgress();
   }
 
   @override
@@ -84,9 +111,8 @@ class _PlayerPageState extends State<PlayerPage>
 
     // 2. Video controller (binds player to UI)
     videoController = VideoController(player);
-    // 3. Open media (NO AVPlayer, NO range issues)
-    player.open(Media(widget.url, httpHeaders: widget.headers ?? {}));
-    // player.open(Media('https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8'));
+
+    _openMedia();
 
     player.stream.position.listen((p) {
       setState(() => position = p);
@@ -96,7 +122,7 @@ class _PlayerPageState extends State<PlayerPage>
       setState(() => duration = d);
     });
 
-    player.stream.playing.listen((p) {
+    _playingSubscription = player.stream.playing.listen((p) async {
       setState(() {
         isPlaying = p;
         if (p) {
@@ -106,6 +132,20 @@ class _PlayerPageState extends State<PlayerPage>
           showControls = true;
         }
       });
+
+      if (!p || _appliedInitialSeek) return;
+      if (widget.startPosition == null ||
+          widget.startPosition! <= Duration.zero) {
+        return;
+      }
+
+      try {
+        await Future<void>.delayed(const Duration(milliseconds: 150));
+        if (!mounted || _appliedInitialSeek) return;
+        await player.seek(widget.startPosition!);
+        _appliedInitialSeek = true;
+        await _reportPlaybackProgress();
+      } catch (_) {}
     });
 
     playPauseAnim = AnimationController(
@@ -117,6 +157,104 @@ class _PlayerPageState extends State<PlayerPage>
       parent: playPauseAnim,
       curve: Curves.easeOutBack,
     );
+  }
+
+  Future<void> _openMedia() async {
+    await player.open(
+      Media(widget.url, httpHeaders: widget.headers ?? {}),
+      play: false,
+    );
+
+    // Removed initial seek here; handled after playback is ready.
+
+    await player.play();
+    await _reportPlaybackStart();
+    _startProgressReporting();
+
+    if (!_appliedInitialSeek &&
+        widget.startPosition != null &&
+        widget.startPosition! > Duration.zero) {
+      Future<void>.delayed(const Duration(milliseconds: 300), () async {
+        if (!mounted || _appliedInitialSeek) return;
+        try {
+          await player.seek(widget.startPosition!);
+          _appliedInitialSeek = true;
+          await _reportPlaybackProgress();
+        } catch (_) {}
+      });
+    }
+  }
+
+  int _durationToTicks(Duration duration) => duration.inMicroseconds * 10;
+
+  Future<void> _reportPlaybackStart() async {
+    if (_reportedPlaybackStart) return;
+    _reportedPlaybackStart = true;
+
+    try {
+      await http.post(
+        Uri.parse('${widget.server}/Sessions/Playing'),
+        headers: {
+          'Content-Type': 'application/json',
+          if (widget.headers != null) ...widget.headers!,
+        },
+        body: jsonEncode({
+          'ItemId': widget.itemId,
+          'PositionTicks': widget.startPosition != null
+              ? _durationToTicks(widget.startPosition!)
+              : 0,
+          'IsPaused': false,
+          'CanSeek': true,
+        }),
+      );
+    } catch (_) {}
+  }
+
+  Future<void> _reportPlaybackProgress({bool isPaused = false}) async {
+    try {
+      final currentPosition = position;
+      await http.post(
+        Uri.parse('${widget.server}/Sessions/Playing/Progress'),
+        headers: {
+          'Content-Type': 'application/json',
+          if (widget.headers != null) ...widget.headers!,
+        },
+        body: jsonEncode({
+          'ItemId': widget.itemId,
+          'PositionTicks': _durationToTicks(currentPosition),
+          'IsPaused': isPaused,
+          'CanSeek': true,
+        }),
+      );
+    } catch (_) {}
+  }
+
+  Future<void> _reportPlaybackStopped() async {
+    if (_isClosingPlayback) return;
+    _isClosingPlayback = true;
+
+    try {
+      final currentPosition = position;
+      await http.post(
+        Uri.parse('${widget.server}/Sessions/Playing/Stopped'),
+        headers: {
+          'Content-Type': 'application/json',
+          if (widget.headers != null) ...widget.headers!,
+        },
+        body: jsonEncode({
+          'ItemId': widget.itemId,
+          'PositionTicks': _durationToTicks(currentPosition),
+          'Failed': false,
+        }),
+      );
+    } catch (_) {}
+  }
+
+  void _startProgressReporting() {
+    _progressReportTimer?.cancel();
+    _progressReportTimer = Timer.periodic(const Duration(seconds: 10), (_) {
+      _reportPlaybackProgress();
+    });
   }
 
   void _scheduleControlsHide() {
@@ -145,9 +283,31 @@ class _PlayerPageState extends State<PlayerPage>
     return "${two(d.inMinutes)}:${two(d.inSeconds.remainder(60))}";
   }
 
+  Future<void> _handleBack() async {
+    if (_isHandlingBack) return;
+    _isHandlingBack = true;
+
+    _progressReportTimer?.cancel();
+
+    try {
+      await player.pause();
+    } catch (_) {}
+
+    await _reportPlaybackProgress(isPaused: true);
+    await _reportPlaybackStopped();
+
+    if (!mounted) return;
+    Navigator.pop(context);
+  }
+
   @override
   void dispose() {
+    _progressReportTimer?.cancel();
+    if (!_isClosingPlayback) {
+      _reportPlaybackStopped();
+    }
     _controlsTimer?.cancel();
+    _playingSubscription?.cancel();
     player.dispose();
     playPauseAnim.dispose();
     super.dispose();
@@ -206,7 +366,7 @@ class _PlayerPageState extends State<PlayerPage>
                                 Icons.arrow_back,
                                 color: Colors.white,
                               ),
-                              onPressed: () => Navigator.pop(context),
+                              onPressed: _handleBack,
                             ),
                             Expanded(
                               child: Text(
@@ -287,8 +447,8 @@ class _PlayerPageState extends State<PlayerPage>
                                         max: duration.inSeconds
                                             .toDouble()
                                             .clamp(1, double.infinity),
-                                        onChanged: (v) {
-                                          player.seek(
+                                        onChanged: (v) async {
+                                          await _seekTo(
                                             Duration(seconds: v.toInt()),
                                           );
                                         },
@@ -322,28 +482,16 @@ class _PlayerPageState extends State<PlayerPage>
                                                 Icons.replay_10,
                                                 color: Colors.white,
                                               ),
-                                              onPressed: () {
-                                                player.seek(
-                                                  position -
-                                                      const Duration(
-                                                        seconds: 10,
-                                                      ),
-                                                );
-                                              },
+                                              onPressed: () =>
+                                                  _seekRelative(-10),
                                             ),
                                             IconButton(
                                               icon: const Icon(
                                                 Icons.forward_10,
                                                 color: Colors.white,
                                               ),
-                                              onPressed: () {
-                                                player.seek(
-                                                  position +
-                                                      const Duration(
-                                                        seconds: 10,
-                                                      ),
-                                                );
-                                              },
+                                              onPressed: () =>
+                                                  _seekRelative(10),
                                             ),
                                             IconButton(
                                               icon: Icon(
