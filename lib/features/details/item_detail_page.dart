@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:gelatin/core/playback/playback_controller.dart';
 import 'package:gelatin/core/playback/playback_service.dart';
 import 'package:gelatin/features/player/player_page.dart';
+import 'package:gelatin/features/player/audio_player_page.dart';
 
 class ItemDetailPage extends StatefulWidget {
   final String server;
@@ -560,8 +561,70 @@ class _ItemDetailPageState extends State<ItemDetailPage> {
                                                     String streamUrl;
 
                                                     if (type == 'Audio') {
+                                                      final effectiveMediaSources =
+                                                          effectiveItem['MediaSources']
+                                                              is List
+                                                          ? (effectiveItem['MediaSources']
+                                                                    as List)
+                                                                .cast<dynamic>()
+                                                          : const <dynamic>[];
+                                                      final primarySource =
+                                                          effectiveMediaSources
+                                                                  .isNotEmpty &&
+                                                              effectiveMediaSources
+                                                                      .first
+                                                                  is Map
+                                                          ? Map<
+                                                              String,
+                                                              dynamic
+                                                            >.from(
+                                                              effectiveMediaSources
+                                                                      .first
+                                                                  as Map,
+                                                            )
+                                                          : const <
+                                                              String,
+                                                              dynamic
+                                                            >{};
+
+                                                      final mediaSourceId =
+                                                          primarySource['Id']
+                                                              ?.toString();
+                                                      final container =
+                                                          primarySource['Container']
+                                                              ?.toString()
+                                                              .trim()
+                                                              .toLowerCase();
+                                                      final extension =
+                                                          (container != null &&
+                                                              container
+                                                                  .isNotEmpty)
+                                                          ? '.$container'
+                                                          : '.mp3';
+
+                                                      final query =
+                                                          <String, String>{
+                                                            'static': 'true',
+                                                            'api_key': token,
+                                                          };
+
+                                                      if (mediaSourceId !=
+                                                              null &&
+                                                          mediaSourceId
+                                                              .isNotEmpty) {
+                                                        query['MediaSourceId'] =
+                                                            mediaSourceId;
+                                                      }
+
                                                       streamUrl =
-                                                          '$server/Audio/$id/stream';
+                                                          Uri.parse(
+                                                                '$server/Audio/$id/stream$extension',
+                                                              )
+                                                              .replace(
+                                                                queryParameters:
+                                                                    query,
+                                                              )
+                                                              .toString();
                                                     } else {
                                                       try {
                                                         final controller =
@@ -583,27 +646,68 @@ class _ItemDetailPageState extends State<ItemDetailPage> {
                                                     final result = await Navigator.push(
                                                       context,
                                                       MaterialPageRoute(
-                                                        builder: (_) => PlayerPage(
-                                                          url: streamUrl,
-                                                          title:
-                                                              effectiveItem['Name'] ??
-                                                              item['Name'] ??
-                                                              '',
-                                                          headers: {
-                                                            'X-Emby-Token':
-                                                                token,
-                                                          },
-                                                          startPosition:
-                                                              latestCanResume
-                                                              ? Duration(
-                                                                  microseconds:
-                                                                      latestPlaybackPositionTicks ~/
-                                                                      10,
-                                                                )
-                                                              : null,
-                                                          server: server,
-                                                          itemId: id,
-                                                        ),
+                                                        builder: (_) {
+                                                          if (type == 'Audio') {
+                                                            return AudioPlayerPage(
+                                                              url: streamUrl,
+                                                              title:
+                                                                  effectiveItem['Name'] ??
+                                                                  item['Name'] ??
+                                                                  '',
+                                                              artist:
+                                                                  effectiveItem['AlbumArtist']
+                                                                      ?.toString() ??
+                                                                  (effectiveItem['Artists']
+                                                                              is List &&
+                                                                          (effectiveItem['Artists']
+                                                                                  as List)
+                                                                              .isNotEmpty
+                                                                      ? (effectiveItem['Artists']
+                                                                                as List)
+                                                                            .first
+                                                                            .toString()
+                                                                      : null),
+                                                              album: effectiveItem['Album']
+                                                                  ?.toString(),
+                                                              artworkUrl:
+                                                                  '$server/Items/$id/Images/Primary',
+                                                              headers: {
+                                                                'X-Emby-Token':
+                                                                    token,
+                                                              },
+                                                              startPosition:
+                                                                  latestCanResume
+                                                                  ? Duration(
+                                                                      microseconds:
+                                                                          latestPlaybackPositionTicks ~/
+                                                                          10,
+                                                                    )
+                                                                  : null,
+                                                            );
+                                                          }
+
+                                                          return PlayerPage(
+                                                            url: streamUrl,
+                                                            title:
+                                                                effectiveItem['Name'] ??
+                                                                item['Name'] ??
+                                                                '',
+                                                            headers: {
+                                                              'X-Emby-Token':
+                                                                  token,
+                                                            },
+                                                            startPosition:
+                                                                latestCanResume
+                                                                ? Duration(
+                                                                    microseconds:
+                                                                        latestPlaybackPositionTicks ~/
+                                                                        10,
+                                                                  )
+                                                                : null,
+                                                            server: server,
+                                                            itemId: id,
+                                                          );
+                                                        },
                                                       ),
                                                     );
                                                     if (!context.mounted) {
