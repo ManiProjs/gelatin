@@ -2,7 +2,7 @@
 #define MyAppPublisher "Mani Arasteh"
 #define MyAppURL "https://github.com/ManiProjs/gelatin"
 #define MyAppExeName "gelatin.exe"
-#define MyAppVersion "1.0.0"
+#define MyAppVersion "1.1.0"
 
 [Setup]
 AppId={{E8A51C3F-DFD2-4F74-9A72-FA7D9B36F9B8}
