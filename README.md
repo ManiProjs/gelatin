@@ -66,7 +66,7 @@ flutter doctor
 ## Clone
 
 ```sh
-git clone https://github.com/YOUR_USERNAME/Gelatin.git
+git clone https://github.com/ManiProjs/gelatin.git
 cd Gelatin
 ```
 
